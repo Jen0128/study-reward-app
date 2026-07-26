@@ -17,11 +17,16 @@
     h2, h3 { margin-top: 0; color: var(--primary); }
     .hidden { display: none !important; }
     .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; box-sizing: border-box; }
-    .btn-sm { width: auto; padding: 6px 14px; font-size: 13px; margin-top: 0; }
+    .btn-sm { width: auto; padding: 6px 14px; font-size: 13px; margin-top: 0; border-radius: 20px; font-weight: bold; }
     .btn-danger { background: #e74c3c; }
     .btn-success { background: #2ecc71; }
     .btn-secondary { background: #95a5a6; }
-    .btn-disabled { background: #cbd5e0; cursor: not-allowed; }
+    
+    /* 狀態按鈕樣式 (對齊參考圖風格) */
+    .status-btn-todo { background: #2e7d32; color: white; border: none; cursor: pointer; } /* 未完成 (綠色) */
+    .status-btn-pending { background: #e67e22; color: white; border: none; cursor: default; } /* 待驗證 (橘色) */
+    .status-btn-done { background: #a0aec0; color: white; border: none; cursor: default; } /* 已完成 (灰色) */
+
     .task-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #edf2f7; }
     .task-info { display: flex; flex-direction: column; }
     .task-title { font-weight: bold; font-size: 15px; }
@@ -39,7 +44,8 @@
     
     /* 彈出視窗 Modal 樣式 */
     .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal-card { background: white; border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal-card { background: white; border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
+    .modal-close { position: absolute; top: 15px; right: 15px; font-size: 20px; cursor: pointer; color: #718096; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -66,7 +72,7 @@
           <span id="roleBadge" class="badge bg-approved">身分已驗證</span>
           <h2 style="margin: 5px 0 0;" id="ptsDisplay">🏆 餘額：<span id="totalPoints">0</span> 點</h2>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="logout()">切換帳號</button>
+        <button class="btn btn-secondary btn-sm" onclick="logout()" style="border-radius:8px;">切換帳號</button>
       </div>
       <p id="drawCountText" style="margin: 5px 0 0; font-size: 13px; color: #718096;">可抽獎次數：<b id="drawCount">0</b> 次 (10點/次)</p>
     </div>
@@ -77,7 +83,7 @@
       <div id="tabBfCheckin">
         <div class="card">
           <h3>📝 任務打卡 (本週次數限制)</h3>
-          <div id="taskList"></div>
+          <div id="taskList">載入中...</div>
         </div>
       </div>
 
@@ -139,18 +145,16 @@
   <!-- 3. 打卡彈出視窗 (Modal) -->
   <div id="checkinModal" class="modal-overlay hidden">
     <div class="modal-card">
-      <h3 id="modalTaskTitle" style="margin-bottom: 10px;">提交任務打卡</h3>
+      <span class="modal-close" onclick="closeModal()">✖</span>
+      <h3 id="modalTaskTitle" style="margin-bottom: 15px; padding-right: 20px;">提交任務打卡</h3>
       
-      <p style="font-size: 14px; margin-bottom: 5px;"><b>📝 任務描述說明：</b></p>
-      <textarea id="modalTaskDesc" placeholder="例如：微積分 CH3 練習題、跑步機 30 分鐘..." rows="3"></textarea>
+      <p style="font-size: 14px; margin-bottom: 5px;"><b>📝 任務描述 (如：讀書章節、健身內容、打掃區域)：</b></p>
+      <textarea id="modalTaskDesc" placeholder="例如：微積分 CH3 練習題、有氧跑步機 30 分鐘..." rows="3"></textarea>
 
-      <p style="font-size: 14px; margin-bottom: 5px;"><b>📸 上傳證明照片：</b></p>
+      <p style="font-size: 14px; margin-bottom: 5px; margin-top: 10px;"><b>📸 上傳證明照片：</b></p>
       <input type="file" id="modalPhotoInput" accept="image/*">
 
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
-        <button class="btn btn-success" onclick="confirmSubmitCheckin()">確認提交</button>
-      </div>
+      <button class="btn btn-success" style="margin-top: 15px;" onclick="confirmSubmitCheckin()">提交給女友審核</button>
     </div>
   </div>
 
@@ -159,7 +163,8 @@
     const PIN_BF = "1111"; // 男友 PIN 碼
     const PIN_GF = "8888"; // 女友 PIN 碼
 
-    let activeTask = null; // 當前選中的任務
+    let activeTask = null;
+    let userLogs = []; // 保存傳回的打卡紀錄歷史
 
     const TASKS = [
       { id: 't1', name: '每天完成讀書計劃', pts: 2, limit: 7 },
@@ -228,7 +233,6 @@
         document.getElementById('drawCountText').classList.remove('hidden');
       }
 
-      renderTasks();
       renderStore();
       loadData();
     }
@@ -236,13 +240,29 @@
     function renderTasks() {
       let html = '';
       TASKS.forEach(t => {
+        // 判斷該任務在歷史紀錄中的狀態
+        const pendingItem = userLogs.find(l => l.items.includes(t.name) && l.status === 'Pending');
+        const approvedCount = userLogs.filter(l => l.items.includes(t.name) && l.status === 'Approved').length;
+
+        let btnHtml = '';
+        if (pendingItem) {
+          // 有打卡正待驗證中
+          btnHtml = `<button class="btn btn-sm status-btn-pending">待驗證</button>`;
+        } else if (approvedCount >= t.limit) {
+          // 已達到本週次數上限
+          btnHtml = `<button class="btn btn-sm status-btn-done">已完成</button>`;
+        } else {
+          // 尚未完成，顯示可點擊的「未完成」按鈕
+          btnHtml = `<button class="btn btn-sm status-btn-todo" onclick="openCheckinModal('${t.name}', ${t.pts})">未完成</button>`;
+        }
+
         html += `
           <div class="task-item">
             <div class="task-info">
               <span class="task-title">${t.name} (+${t.pts}點)</span>
               <span class="task-sub">週上限 ${t.limit} 次</span>
             </div>
-            <button class="btn btn-sm" onclick="openCheckinModal('${t.name}', ${t.pts})">完成</button>
+            ${btnHtml}
           </div>
         `;
       });
@@ -265,7 +285,6 @@
       document.getElementById('storeList').innerHTML = html;
     }
 
-    // 打卡視窗控制
     function openCheckinModal(name, pts) {
       activeTask = { name, pts };
       document.getElementById('modalTaskTitle').innerText = `提交【${name}】打卡`;
@@ -289,50 +308,47 @@
     }
 
     async function confirmSubmitCheckin() {
-        const desc = document.getElementById('modalTaskDesc').value;
-        if (!desc) return Swal.fire('提示', '請填寫任務描述說明！', 'warning');
+      const desc = document.getElementById('modalTaskDesc').value;
+      if (!desc) return Swal.fire('提示', '請填寫任務描述說明！', 'warning');
 
-        const photoFile = document.getElementById('modalPhotoInput').files[0];
-        if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
+      const photoFile = document.getElementById('modalPhotoInput').files[0];
+      if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
 
-        closeModal();
-        Swal.fire({ title: '上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      closeModal();
+      Swal.fire({ title: '上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-        try {
-            const photoBase64 = await getBase64(photoFile);
+      try {
+        const photoBase64 = await getBase64(photoFile);
 
-            // 加上 mode: 'no-cors' 避開 GAS 的 CORS 跨網域阻擋問題
-            await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain'
-            },
-            body: JSON.stringify({
-                action: 'submit',
-                items: [activeTask.name],
-                points: activeTask.pts,
-                photoBase64: photoBase64,
-                desc: desc
-            })
-            });
+        await fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'submit',
+            items: [activeTask.name],
+            points: activeTask.pts,
+            photoBase64: photoBase64,
+            desc: desc
+          })
+        });
 
-            Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
-            loadData();
-        } catch (err) {
-            Swal.fire('提交失敗', '上傳過程發生錯誤，請重試！', 'error');
-        }
-        }
+        Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
+        loadData();
+      } catch (err) {
+        Swal.fire('提交失敗', '上傳過程發生錯誤，請重試！', 'error');
+      }
+    }
 
     async function loadData() {
       const res = await fetch(API_URL);
-      const logs = await res.json();
+      userLogs = await res.json();
 
       let approvedPts = 0;
       let auditHtml = '';
       let redeemHtml = '';
 
-      logs.reverse().forEach(log => {
+      userLogs.slice().reverse().forEach(log => {
         if (log.status === 'Approved') {
           approvedPts += parseFloat(log.points);
         }
@@ -369,6 +385,9 @@
       document.getElementById('drawCount').innerText = Math.floor(approvedPts / 10);
       document.getElementById('auditList').innerHTML = auditHtml || '<p style="color:#718096;">目前沒有待審核的打卡～</p>';
       document.getElementById('redeemList').innerHTML = redeemHtml || '<p style="color:#718096;">目前沒有待履約的兌換～</p>';
+
+      // 重新繪製打卡列表狀態（未完成 / 待驗證 / 已完成）
+      renderTasks();
     }
 
     async function audit(id, action) {
@@ -387,6 +406,8 @@
       Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       await fetch(API_URL, {
         method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action: action, id: id, reason: reason })
       });
       Swal.fire('完成', '狀態已更新', 'success');
@@ -402,6 +423,8 @@
       Swal.fire({ title: '兌換中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       await fetch(API_URL, {
         method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action: 'redeem', rewardName: name, points: pts })
       });
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -423,7 +446,6 @@
       }, 3000);
     }
 
-    // 頁面切換控制
     function switchBfTab(tab) {
       ['Checkin', 'Store', 'Wheel'].forEach(t => {
         document.getElementById('tabBf' + t).classList.add('hidden');
@@ -442,7 +464,6 @@
       document.getElementById('navGf' + tab).classList.add('active');
     }
 
-    // 註冊 PWA Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
     }

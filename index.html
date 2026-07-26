@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>💖 讀書與健身獎勵系統</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -15,11 +16,16 @@
     .card { background: var(--card); border-radius: 16px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 18px; }
     h2, h3 { margin-top: 0; color: var(--primary); }
     .hidden { display: none !important; }
-    .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; box-sizing: border-box; }
+    .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; box-sizing: border-box; }
+    .btn-sm { width: auto; padding: 6px 14px; font-size: 13px; margin-top: 0; }
     .btn-danger { background: #e74c3c; }
     .btn-success { background: #2ecc71; }
     .btn-secondary { background: #95a5a6; }
-    .task-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #edf2f7; }
+    .btn-disabled { background: #cbd5e0; cursor: not-allowed; }
+    .task-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #edf2f7; }
+    .task-info { display: flex; flex-direction: column; }
+    .task-title { font-weight: bold; font-size: 15px; }
+    .task-sub { font-size: 12px; color: #718096; margin-top: 2px; }
     input[type="text"], input[type="password"], textarea, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e0; box-sizing: border-box; margin-top: 5px; margin-bottom: 10px; font-size: 15px; }
     .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; }
     .bg-pending { background: #fef3c7; color: #d97706; }
@@ -30,6 +36,10 @@
     .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #e2e8f0; }
     .nav-item { border: none; background: none; font-size: 12px; color: #718096; cursor: pointer; }
     .nav-item.active { color: var(--primary); font-weight: bold; }
+    
+    /* 彈出視窗 Modal 樣式 */
+    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-card { background: white; border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
@@ -39,8 +49,8 @@
     <h2>🔒 身分驗證</h2>
     <p>請選擇您的身分並輸入 4 位數 PIN 碼：</p>
     <select id="roleSelect">
-      <option value="bf">👦 男朋友 (打卡/兌換)</option>
-      <option value="gf">👧 女朋友 (審核/管理)</option>
+      <option value="bf">👦 男朋友 (打卡/兌換/抽獎)</option>
+      <option value="gf">👧 女朋友 (審核/履約管理)</option>
     </select>
     <input type="password" id="pinInput" placeholder="輸入 PIN 碼 (預設: 1111/8888)" maxlength="4">
     <button class="btn" onclick="login()">登入系統</button>
@@ -49,80 +59,108 @@
   <!-- 2. 主程式區域 -->
   <div id="appView" class="hidden">
     
-    <!-- 點數儀表板 -->
+    <!-- 頂部資訊欄 -->
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <span id="roleBadge" class="badge bg-approved">身分已驗證</span>
-          <h2 style="margin: 5px 0 0;">🏆 餘額：<span id="totalPoints">0</span> 點</h2>
+          <h2 style="margin: 5px 0 0;" id="ptsDisplay">🏆 餘額：<span id="totalPoints">0</span> 點</h2>
         </div>
-        <button class="btn btn-secondary" onclick="logout()" style="width: auto; padding: 6px 12px; font-size: 12px;">切換帳號</button>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">切換帳號</button>
       </div>
-      <p style="margin: 5px 0 0; font-size: 13px; color: #718096;">可抽獎次數：<b id="drawCount">0</b> 次 (10點/次)</p>
+      <p id="drawCountText" style="margin: 5px 0 0; font-size: 13px; color: #718096;">可抽獎次數：<b id="drawCount">0</b> 次 (10點/次)</p>
     </div>
 
-    <!-- 男友打卡頁面 -->
-    <div id="tabCheckin">
-      <div class="card">
-        <h3>📝 任務打卡 (本週次數限制)</h3>
-        <form id="checkinForm">
+    <!-- ==================== 男朋友介面 ==================== -->
+    <div id="bfView" class="hidden">
+      <!-- 男友打卡頁 -->
+      <div id="tabBfCheckin">
+        <div class="card">
+          <h3>📝 任務打卡 (本週次數限制)</h3>
           <div id="taskList"></div>
-          
-          <p><b>📝 任務描述 (如：讀書章節、健身內容、打掃區域)：</b></p>
-          <textarea id="taskDesc" placeholder="例如：微積分 CH3 練習題、有氧跑步機 30 分鐘..." required></textarea>
-
-          <p><b>📸 上傳證明照片：</b></p>
-          <input type="file" id="photoInput" accept="image/*" required>
-
-          <button type="button" class="btn" onclick="submitCheckin()">提交給女友審核</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- 女友審核頁面 -->
-    <div id="tabAudit" class="hidden">
-      <div class="card">
-        <h3>🔍 待審核清單</h3>
-        <div id="auditList">載入中...</div>
-      </div>
-    </div>
-
-    <!-- 獎勵商店與兌換頁面 -->
-    <div id="tabStore" class="hidden">
-      <div class="card">
-        <h3>🎁 獎勵商店</h3>
-        <div id="storeList"></div>
-      </div>
-    </div>
-
-    <!-- 抽獎輪盤頁面 -->
-    <div id="tabWheel" class="hidden">
-      <div class="card" style="text-align: center;">
-        <h3>🎲 幸運抽獎輪盤</h3>
-        <p style="font-size: 13px; color: #718096;">每次抽獎消耗 10 點</p>
-        <div class="wheel-container">
-          <div id="wheel" class="wheel">點擊抽獎</div>
         </div>
-        <button class="btn" onclick="spinWheel()">開始抽獎 (10點)</button>
+      </div>
+
+      <!-- 男友商店頁 -->
+      <div id="tabBfStore" class="hidden">
+        <div class="card">
+          <h3>🎁 獎勵商店</h3>
+          <div id="storeList"></div>
+        </div>
+      </div>
+
+      <!-- 男友輪盤頁 -->
+      <div id="tabBfWheel" class="hidden">
+        <div class="card" style="text-align: center;">
+          <h3>🎲 幸運抽獎輪盤</h3>
+          <p style="font-size: 13px; color: #718096;">每次抽獎消耗 10 點</p>
+          <div class="wheel-container">
+            <div id="wheel" class="wheel">點擊抽獎</div>
+          </div>
+          <button class="btn" onclick="spinWheel()">開始抽獎 (10點)</button>
+        </div>
+      </div>
+
+      <!-- 男友底部導覽列 -->
+      <div class="nav-bar">
+        <button id="navBfCheckin" class="nav-item active" onclick="switchBfTab('Checkin')">📝 打卡</button>
+        <button id="navBfStore" class="nav-item" onclick="switchBfTab('Store')">🎁 商店</button>
+        <button id="navBfWheel" class="nav-item" onclick="switchBfTab('Wheel')">🎲 輪盤</button>
       </div>
     </div>
 
-    <!-- 底部導覽列 -->
-    <div class="nav-bar">
-      <button class="nav-item active" onclick="switchTab('Checkin')">📝 打卡</button>
-      <button class="nav-item" onclick="switchTab('Store')">🎁 商店</button>
-      <button class="nav-item" onclick="switchTab('Wheel')">🎲 輪盤</button>
-      <button id="navAuditBtn" class="nav-item hidden" onclick="switchTab('Audit')">🔍 審核</button>
+    <!-- ==================== 女朋友介面 ==================== -->
+    <div id="gfView" class="hidden">
+      <!-- 女友打卡審核頁 -->
+      <div id="tabGfAudit">
+        <div class="card">
+          <h3>🔍 待審核打卡紀錄</h3>
+          <div id="auditList">載入中...</div>
+        </div>
+      </div>
+
+      <!-- 女友兌換履約頁 -->
+      <div id="tabGfRedeem" class="hidden">
+        <div class="card">
+          <h3>🛍️ 男友兌換申請 (待履約)</h3>
+          <div id="redeemList">載入中...</div>
+        </div>
+      </div>
+
+      <!-- 女友底部導覽列 -->
+      <div class="nav-bar">
+        <button id="navGfAudit" class="nav-item active" onclick="switchGfTab('Audit')">🔍 審核打卡</button>
+        <button id="navGfRedeem" class="nav-item" onclick="switchGfTab('Redeem')">🛍️ 兌換履約</button>
+      </div>
     </div>
 
   </div>
 
+  <!-- 3. 打卡彈出視窗 (Modal) -->
+  <div id="checkinModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 id="modalTaskTitle" style="margin-bottom: 10px;">提交任務打卡</h3>
+      
+      <p style="font-size: 14px; margin-bottom: 5px;"><b>📝 任務描述說明：</b></p>
+      <textarea id="modalTaskDesc" placeholder="例如：微積分 CH3 練習題、跑步機 30 分鐘..." rows="3"></textarea>
+
+      <p style="font-size: 14px; margin-bottom: 5px;"><b>📸 上傳證明照片：</b></p>
+      <input type="file" id="modalPhotoInput" accept="image/*">
+
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-success" onclick="confirmSubmitCheckin()">確認提交</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyZ8ls-B00xg4CiSlTJo9-dRCg3kn21xEtSeKk1isLSQD3lko9PtTabPLrQhIfuuTguow/exec";
-    const PIN_BF = "1111"; // 男友預設 PIN 碼
-    const PIN_GF = "8888"; // 女友預設 PIN 碼
+    const PIN_BF = "1111"; // 男友 PIN 碼
+    const PIN_GF = "8888"; // 女友 PIN 碼
 
-    // 任務清單設定 (每週上限)
+    let activeTask = null; // 當前選中的任務
+
     const TASKS = [
       { id: 't1', name: '每天完成讀書計劃', pts: 2, limit: 7 },
       { id: 't2', name: '迷你讀書 (30分鐘)', pts: 1, limit: 7 },
@@ -138,21 +176,20 @@
       { id: 't12', name: '規劃下次約會行程', pts: 2, limit: 2 }
     ];
 
-    // 預設商店清單
     const STORE_ITEMS = [
-      { name: '【7-11】CITY CAFE 冰美式咖啡(大)', pts: 9, type: '小獎' },
-      { name: '【7-11】CITY CAFE 冰拿鐵咖啡(大)', pts: 11, type: '小獎' },
-      { name: '【7-11】西西里風檸檬氣泡咖啡', pts: 16, type: '小獎' },
-      { name: '【7-11】光泉高蛋白奶大麥蛋白飲', pts: 9, type: '小獎' },
-      { name: '【7-11】卜蜂義式香草雞胸肉', pts: 12, type: '小獎' },
-      { name: '一起連線玩遊戲 1 小時', pts: 5, type: '小獎' },
-      { name: '手作曲奇餅乾（減糖高蛋白版）', pts: 25, type: '中獎' },
-      { name: '肩頸肌肉放鬆按摩 20 分鐘', pts: 20, type: '中獎' },
-      { name: '一次外送券（限額 $150）', pts: 30, type: '中獎' },
-      { name: '一日陪讀 / 陪放空行程', pts: 25, type: '中獎' },
-      { name: '蛋白粉一包（口味任選）', pts: 120, type: '中獎', url: 'https://tw.shp.ee/YP6XMKPT' },
-      { name: '健身專業裝備任選', pts: 100, type: '中獎' },
-      { name: '🔒 終極大獎 (預留空位 - 明年3月解鎖)', pts: 999, type: '大獎', locked: true }
+      { name: '【7-11】CITY CAFE 冰美式咖啡(大)', pts: 9 },
+      { name: '【7-11】CITY CAFE 冰拿鐵咖啡(大)', pts: 11 },
+      { name: '【7-11】西西里風檸檬氣泡咖啡', pts: 16 },
+      { name: '【7-11】光泉高蛋白奶大麥蛋白飲', pts: 9 },
+      { name: '【7-11】卜蜂義式香草雞胸肉', pts: 12 },
+      { name: '一起連線玩遊戲 1 小時', pts: 5 },
+      { name: '手作曲奇餅乾（減糖高蛋白版）', pts: 25 },
+      { name: '肩頸肌肉放鬆按摩 20 分鐘', pts: 20 },
+      { name: '一次外送券（限額 $150）', pts: 30 },
+      { name: '一日陪讀 / 陪放空行程', pts: 25 },
+      { name: '蛋白粉一包（口味任選）', pts: 120, url: 'https://tw.shp.ee/YP6XMKPT' },
+      { name: '健身專業裝備任選', pts: 100 },
+      { name: '🔒 終極大獎 (明年3月解鎖)', pts: 999, locked: true }
     ];
 
     let currentRole = localStorage.getItem('user_role') || '';
@@ -181,9 +218,14 @@
 
       if (currentRole === 'gf') {
         document.getElementById('roleBadge').innerText = '👧 女朋友權限';
-        document.getElementById('navAuditBtn').classList.remove('hidden');
+        document.getElementById('gfView').classList.remove('hidden');
+        document.getElementById('bfView').classList.add('hidden');
+        document.getElementById('drawCountText').classList.add('hidden');
       } else {
         document.getElementById('roleBadge').innerText = '👦 男朋友權限';
+        document.getElementById('bfView').classList.remove('hidden');
+        document.getElementById('gfView').classList.add('hidden');
+        document.getElementById('drawCountText').classList.remove('hidden');
       }
 
       renderTasks();
@@ -196,8 +238,11 @@
       TASKS.forEach(t => {
         html += `
           <div class="task-item">
-            <label><input type="checkbox" name="task" value="${t.pts}" data-name="${t.name}"> ${t.name} (+${t.pts}點)</label>
-            <span style="font-size: 12px; color: #718096;">週上限 ${t.limit} 次</span>
+            <div class="task-info">
+              <span class="task-title">${t.name} (+${t.pts}點)</span>
+              <span class="task-sub">週上限 ${t.limit} 次</span>
+            </div>
+            <button class="btn btn-sm" onclick="openCheckinModal('${t.name}', ${t.pts})">完成</button>
           </div>
         `;
       });
@@ -209,23 +254,29 @@
       STORE_ITEMS.forEach(item => {
         html += `
           <div class="task-item">
-            <div>
-              <b>${item.name}</b> ${item.url ? `<a href="${item.url}" target="_blank">🔗 連結</a>` : ''}
-              <br><span style="font-size:12px; color:#718096;">需要 ${item.pts} 點</span>
+            <div class="task-info">
+              <span class="task-title">${item.name} ${item.url ? `<a href="${item.url}" target="_blank">🔗</a>` : ''}</span>
+              <span class="task-sub">需要 ${item.pts} 點</span>
             </div>
-            <button class="btn btn-success" style="width:auto; padding:6px 12px;" onclick="redeem('${item.name}', ${item.pts}, ${item.locked})">兌換</button>
+            <button class="btn btn-success btn-sm" onclick="redeem('${item.name}', ${item.pts}, ${item.locked})">兌換</button>
           </div>
         `;
       });
       document.getElementById('storeList').innerHTML = html;
     }
 
-    function switchTab(tabName) {
-      ['Checkin', 'Store', 'Wheel', 'Audit'].forEach(t => {
-        const el = document.getElementById('tab' + t);
-        if (el) el.classList.add('hidden');
-      });
-      document.getElementById('tab' + tabName).classList.remove('hidden');
+    // 打卡視窗控制
+    function openCheckinModal(name, pts) {
+      activeTask = { name, pts };
+      document.getElementById('modalTaskTitle').innerText = `提交【${name}】打卡`;
+      document.getElementById('modalTaskDesc').value = '';
+      document.getElementById('modalPhotoInput').value = '';
+      document.getElementById('checkinModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('checkinModal').classList.add('hidden');
+      activeTask = null;
     }
 
     function getBase64(file) {
@@ -237,41 +288,41 @@
       });
     }
 
-    async function submitCheckin() {
-      const cbs = document.querySelectorAll('input[name="task"]:checked');
-      if (cbs.length === 0) return Swal.fire('提示', '請至少選擇一項任務！', 'warning');
-      
-      const desc = document.getElementById('taskDesc').value;
-      if (!desc) return Swal.fire('提示', '請填寫任務描述說明！', 'warning');
+    async function confirmSubmitCheckin() {
+        const desc = document.getElementById('modalTaskDesc').value;
+        if (!desc) return Swal.fire('提示', '請填寫任務描述說明！', 'warning');
 
-      const photoFile = document.getElementById('photoInput').files[0];
-      if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
+        const photoFile = document.getElementById('modalPhotoInput').files[0];
+        if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
 
-      Swal.fire({ title: '上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        closeModal();
+        Swal.fire({ title: '上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-      const items = [];
-      let points = 0;
-      cbs.forEach(cb => {
-        items.push(cb.getAttribute('data-name'));
-        points += parseFloat(cb.value);
-      });
+        try {
+            const photoBase64 = await getBase64(photoFile);
 
-      const photoBase64 = await getBase64(photoFile);
+            // 加上 mode: 'no-cors' 避開 GAS 的 CORS 跨網域阻擋問題
+            await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: JSON.stringify({
+                action: 'submit',
+                items: [activeTask.name],
+                points: activeTask.pts,
+                photoBase64: photoBase64,
+                desc: desc
+            })
+            });
 
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'submit',
-          items: items,
-          points: points,
-          photoBase64: photoBase64,
-          desc: desc
-        })
-      });
-
-      Swal.fire('提交成功！', '請等待女友審核發放點數～', 'success');
-      loadData();
-    }
+            Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
+            loadData();
+        } catch (err) {
+            Swal.fire('提交失敗', '上傳過程發生錯誤，請重試！', 'error');
+        }
+        }
 
     async function loadData() {
       const res = await fetch(API_URL);
@@ -279,21 +330,36 @@
 
       let approvedPts = 0;
       let auditHtml = '';
+      let redeemHtml = '';
 
       logs.reverse().forEach(log => {
         if (log.status === 'Approved') {
           approvedPts += parseFloat(log.points);
-        } else if (log.status === 'Pending' && currentRole === 'gf') {
+        }
+
+        // 女友審核打卡清單
+        if (log.status === 'Pending' && log.points > 0 && currentRole === 'gf') {
           auditHtml += `
-            <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-              <p><b>${log.date}</b></p>
-              <p>項目：${log.items} (${log.points}點)</p>
-              <p>說明：${log.desc}</p>
-              ${log.photoUrl ? `<a href="${log.photoUrl}" target="_blank"><img src="${log.photoUrl}" style="max-width:100%; border-radius:8px;"></a>` : ''}
+            <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
+              <p style="margin:2px 0;"><b>時間：</b>${log.date}</p>
+              <p style="margin:2px 0;"><b>項目：</b>${log.items} (+${log.points}點)</p>
+              <p style="margin:2px 0;"><b>說明：</b>${log.desc}</p>
+              ${log.photoUrl ? `<a href="${log.photoUrl}" target="_blank"><img src="${log.photoUrl}" style="max-width:100%; border-radius:8px; margin-top:5px;"></a>` : ''}
               <div style="display:flex; gap:10px; margin-top:8px;">
-                <button class="btn btn-success" onclick="audit('${log.id}', 'approve')">同意 ✅</button>
-                <button class="btn btn-danger" onclick="audit('${log.id}', 'reject')">退件 ❌</button>
+                <button class="btn btn-success btn-sm" style="flex:1;" onclick="audit('${log.id}', 'approve')">同意 ✅</button>
+                <button class="btn btn-danger btn-sm" style="flex:1;" onclick="audit('${log.id}', 'reject')">退件 ❌</button>
               </div>
+            </div>
+          `;
+        }
+
+        // 女友兌換履約清單
+        if (log.status === 'Pending' && log.points < 0 && currentRole === 'gf') {
+          redeemHtml += `
+            <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
+              <p style="margin:2px 0;"><b>時間：</b>${log.date}</p>
+              <p style="margin:2px 0;"><b>申請兌換：</b>${log.items}</p>
+              <button class="btn btn-success btn-sm" onclick="audit('${log.id}', 'approve')">完成履約 ✅</button>
             </div>
           `;
         }
@@ -301,7 +367,8 @@
 
       document.getElementById('totalPoints').innerText = approvedPts;
       document.getElementById('drawCount').innerText = Math.floor(approvedPts / 10);
-      document.getElementById('auditList').innerHTML = auditHtml || '<p>目前沒有待審核的打卡～</p>';
+      document.getElementById('auditList').innerHTML = auditHtml || '<p style="color:#718096;">目前沒有待審核的打卡～</p>';
+      document.getElementById('redeemList').innerHTML = redeemHtml || '<p style="color:#718096;">目前沒有待履約的兌換～</p>';
     }
 
     async function audit(id, action) {
@@ -322,7 +389,7 @@
         method: 'POST',
         body: JSON.stringify({ action: action, id: id, reason: reason })
       });
-      Swal.fire('完成', '審核狀態已更新', 'success');
+      Swal.fire('完成', '狀態已更新', 'success');
       loadData();
     }
 
@@ -338,7 +405,7 @@
         body: JSON.stringify({ action: 'redeem', rewardName: name, points: pts })
       });
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      Swal.fire('兌換成功！', `已兌換 ${name}，請找女友履約！`, 'success');
+      Swal.fire('兌換申請已送出！', `已扣除 ${pts} 點，請等待女友履約！`, 'success');
       loadData();
     }
 
@@ -354,6 +421,25 @@
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         Swal.fire('🎉 抽獎結果', '恭喜獲得【銘謝惠顧！明天繼續加油💪】', 'success');
       }, 3000);
+    }
+
+    // 頁面切換控制
+    function switchBfTab(tab) {
+      ['Checkin', 'Store', 'Wheel'].forEach(t => {
+        document.getElementById('tabBf' + t).classList.add('hidden');
+        document.getElementById('navBf' + t).classList.remove('active');
+      });
+      document.getElementById('tabBf' + tab).classList.remove('hidden');
+      document.getElementById('navBf' + tab).classList.add('active');
+    }
+
+    function switchGfTab(tab) {
+      ['Audit', 'Redeem'].forEach(t => {
+        document.getElementById('tabGf' + t).classList.add('hidden');
+        document.getElementById('navGf' + t).classList.remove('active');
+      });
+      document.getElementById('tabGf' + tab).classList.remove('hidden');
+      document.getElementById('navGf' + tab).classList.add('active');
     }
 
     // 註冊 PWA Service Worker

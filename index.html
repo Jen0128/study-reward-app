@@ -308,37 +308,39 @@
     }
 
     async function confirmSubmitCheckin() {
-      const desc = document.getElementById('modalTaskDesc').value;
-      if (!desc) return Swal.fire('提示', '請填寫任務描述說明！', 'warning');
+        const desc = document.getElementById('modalTaskDesc').value;
+        if (!desc) return Swal.fire('提示', '請填寫任務描述說明！', 'warning');
 
-      const photoFile = document.getElementById('modalPhotoInput').files[0];
-      if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
+        const photoFile = document.getElementById('modalPhotoInput').files[0];
+        if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
 
-      closeModal();
-      Swal.fire({ title: '上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        closeModal();
+        Swal.fire({ title: '上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-      try {
-        const photoBase64 = await getBase64(photoFile);
+        try {
+            const photoBase64 = await getBase64(photoFile);
 
-        await fetch(API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({
+            // 改用 URLSearchParams 傳送成標準 Form 表單，能完美避開 GAS CORS 問題並成功傳送 Base64 照片
+            const payload = new URLSearchParams();
+            payload.append('data', JSON.stringify({
             action: 'submit',
             items: [activeTask.name],
             points: activeTask.pts,
             photoBase64: photoBase64,
             desc: desc
-          })
-        });
+            }));
 
-        Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
-        loadData();
-      } catch (err) {
-        Swal.fire('提交失敗', '上傳過程發生錯誤，請重試！', 'error');
-      }
-    }
+            await fetch(API_URL, {
+            method: 'POST',
+            body: payload
+            });
+
+            Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
+            loadData();
+        } catch (err) {
+            Swal.fire('提交失敗', '上傳過程發生錯誤，請重試！', 'error');
+        }
+        }
 
     async function loadData() {
       const res = await fetch(API_URL);

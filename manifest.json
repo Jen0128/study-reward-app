@@ -1,0 +1,15 @@
+{
+  "name": "💖 讀書與健身獎勵系統",
+  "short_name": "獎勵系統",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f9fc",
+  "theme_color": "#4a90e2",
+  "icons": [
+    {
+      "src": "icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpg"
+    }
+  ]
+}

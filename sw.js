@@ -1,4 +1,4 @@
-const CACHE_NAME = 'reward-app-v3'; // 每次更新程式碼時，可以順便改這個版本號 (例如 v3 -> v4)
+const CACHE_NAME = 'reward-app-v4'; 
 
 const ASSETS = [
   './',
@@ -35,13 +35,20 @@ self.addEventListener('activate', (e) => {
 });
 
 // 3. 請求階段：採用「網路優先 (Network First)」策略
-// 優先抓取最新檔案，如果沒網路（離線）才讀取快取
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request)
       .then((networkResponse) => {
-        // 如果成功抓到最新資源，順便更新快取
-        if (networkResponse && networkResponse.status === 200 && e.request.method === 'GET') {
+        // 檢查：必須是成功的 GET 請求，且 Scheme 必須為 http 或 https
+        const url = new URL(e.request.url);
+        const isValidScheme = url.protocol === 'http:' || url.protocol === 'https:';
+
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          e.request.method === 'GET' &&
+          isValidScheme
+        ) {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
         }

@@ -604,23 +604,28 @@
       renderTasks();
       renderStore();
       renderGfStoreAdmin();
-      checkWheelMilestone(totalEarnedPts);
+      checkWheelMilestone(currentPts);
     }
 
-    function checkWheelMilestone(totalEarned) {
-      if (totalEarned < 30 || currentRole !== 'bf') return;
+    function checkWheelMilestone(currentPts) {
+      if (currentPts < 30 || currentRole !== 'bf') return;
 
-      const currentMilestone = Math.floor(totalEarned / 30) * 30;
+      // 計算當前餘額可達到的最高 30 倍數 (例如 30, 60, 90...)
+      const currentMilestone = Math.floor(currentPts / 30) * 30;
       const lastDrawnMilestone = parseInt(localStorage.getItem('last_wheel_milestone') || '0');
 
+      // 如果當前可達到的里程碑大於已抽過的里程碑
       if (currentMilestone > lastDrawnMilestone) {
         Swal.fire({
           title: '🎉 達標免費抽獎！',
-          text: `恭喜累積達到 ${currentMilestone} 點！獲得 1 次免費抽獎機會！`,
+          text: `恭喜點數達到 ${currentPts} 點！獲得 1 次免費抽獎機會！`,
           icon: 'star',
-          confirmButtonText: '立刻抽獎'
-        }).then(() => {
-          triggerFreeSpin(currentMilestone);
+          confirmButtonText: '立刻抽獎',
+          allowOutsideClick: false
+        }).then((res) => {
+          if (res.isConfirmed) {
+            triggerFreeSpin(currentMilestone);
+          }
         });
       }
     }

@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <button id="btnAdjustPts" class="btn btn-secondary btn-sm hidden" onclick="adjustPointsModal()" style="margin-top:10px; background:#f39c12; width:100%;">⚙️ 女手動調整點數</button>
+      <button id="btnAdjustPts" class="btn btn-secondary btn-sm hidden" onclick="adjustPointsModal()" style="margin-top:10px; background:#f39c12; width:auto; display:block; margin-left:auto;">⚙️ 手動調整點數</button>
     </div>
 
     <!-- 男朋友介面 -->
@@ -106,8 +106,10 @@
 
       <div id="tabGfManageStore" class="hidden">
         <div class="card">
-          <h3>🎁 商店管理</h3>
-          <button class="btn btn-success" onclick="openAddProductModal()" style="margin-bottom:15px;">➕ 新增商品品項</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">🎁 商店管理</h3>
+            <button class="btn btn-success btn-sm" onclick="openAddProductModal()">➕ 新增品項</button>
+          </div>
           <div id="gfStoreAdminList">載入中...</div>
         </div>
       </div>
@@ -401,7 +403,7 @@
           <div class="task-item">
             <div class="task-info">
               <span class="task-title">${t.name} (+${t.pts}點)</span>
-              <span class="task-sub">週上限 ${t.limit} 次</span>
+              <span class="task-sub">本週進度：${approvedCount} / ${t.limit} 次</span>
             </div>
             ${btnHtml}
           </div>

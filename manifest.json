@@ -1,6 +1,6 @@
 {
-  "name": "💖 讀書與健身獎勵系統",
-  "short_name": "獎勵系統",
+  "name": "阿寶充電站",
+  "short_name": "阿寶充電站",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f7f9fc",

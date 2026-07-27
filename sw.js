@@ -1,4 +1,4 @@
-const CACHE_NAME = 'reward-app-v27'; 
+const CACHE_NAME = 'reward-app-v28'; 
 
 const ASSETS = [
   './',

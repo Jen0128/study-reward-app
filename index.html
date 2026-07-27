@@ -689,13 +689,16 @@
     }
 
     function checkWheelMilestone(currentPts) {
-      if (currentPts < 30 || currentRole !== 'bf') return;
+      // 1. 必須是阿寶權限，且點數大於 0
+      if (currentRole !== 'bf' || currentPts <= 0) return;
 
-      const currentMilestone = Math.floor(currentPts / 30) * 30;
+      // 2. 檢查是否正好是 30 的倍數 (30, 60, 90, 120...)
+      const isMultipleOf30 = (currentPts % 30 === 0);
       const lastDrawnMilestone = parseInt(localStorage.getItem('last_wheel_milestone') || '0');
 
-      if (currentMilestone > lastDrawnMilestone) {
-        pendingMilestone = currentMilestone;
+      // 3. 只有「正好是 30 倍數」且「該倍數點數大於上一次抽過的關卡」才觸發
+      if (isMultipleOf30 && currentPts > lastDrawnMilestone) {
+        pendingMilestone = currentPts;
         document.getElementById('wheelModal').classList.remove('hidden');
         drawWheel();
       }

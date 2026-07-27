@@ -199,3 +199,54 @@ select {
   color: #718096; 
   font-weight: bold; 
 }
+
+/* 商店 Grid 兩欄卡片佈局 */
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.product-card {
+  background: #c5d8c3; /* 媲美設計圖的質感淡綠色背景 */
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.product-img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.product-name {
+  font-weight: bold;
+  font-size: 14px;
+  color: #2e4a2d;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.product-pts {
+  font-size: 13px;
+  color: #3b5e39;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.product-btn {
+  width: 100%;
+  background: #3e6837;
+  color: white;
+  border-radius: 20px;
+  padding: 6px 0;
+  font-weight: bold;
+}

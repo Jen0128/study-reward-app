@@ -286,21 +286,23 @@
       let html = '';
       
       storeProducts.forEach(p => {
-        const storeName = p.store || '【7-ELEVEN】';
+        // 只有當 store 有值時才顯示店家抬頭
+        const storeDisplay = p.store ? `<div class="product-store">${p.store}</div>` : '';
         const exchangeableCount = p.pts > 0 ? Math.floor(currentPts / p.pts) : 0;
+        const fullName = p.store ? `${p.store} ${p.name}` : p.name;
 
         html += `
           <div class="product-card">
             <img src="${formatImgUrl(p.img)}" class="product-img" alt="${p.name}" onerror="this.src='https://via.placeholder.com/150'">
             <div class="product-title-group">
-              <div class="product-store">${storeName}</div>
+              ${storeDisplay}
               <div class="product-name">${p.name}</div>
             </div>
             <div class="product-pts-info">
               <span class="product-pts">點數：${p.pts}</span>
               <span class="product-exchangeable">(可換 ${exchangeableCount} 個)</span>
             </div>
-            <button class="btn btn-success btn-sm product-btn" onclick="redeem('${storeName} ${p.name}', ${p.pts})">兌換</button>
+            <button class="btn btn-success btn-sm product-btn" onclick="redeem('${fullName}', ${p.pts})">兌換</button>
           </div>
         `;
       });
@@ -310,13 +312,13 @@
     function renderGfStoreAdmin() {
       let html = '';
       storeProducts.forEach(p => {
-        const storeName = p.store || '【7-ELEVEN】';
+        const storeText = p.store ? `${p.store} ` : '';
         html += `
           <div class="task-item draggable-item" data-id="${p.id}">
-            <span class="drag-handle">☰</span>
+            <span class="drag-handle" style="touch-action: none;">☰</span>
             <img src="${formatImgUrl(p.img)}" style="width:45px; height:45px; border-radius:8px; object-fit:cover; margin-right:10px;" onerror="this.src='https://via.placeholder.com/150'">
             <div class="task-info" style="flex:1;">
-              <span class="task-title">${storeName} ${p.name}</span>
+              <span class="task-title">${storeText}${p.name}</span>
               <span class="task-sub">需要 ${p.pts} 點</span>
             </div>
             <div style="display:flex; gap:5px;">
@@ -330,13 +332,11 @@
       const adminListEl = document.getElementById('gfStoreAdminList');
       adminListEl.innerHTML = html || '<p style="color:#718096;">尚無商品，請點擊上方按鈕新增！</p>';
 
-      // 初始化長按拖曳排序 Sortable
+      // 初始化 Sortable (改為使用左側 ☰ 把手拖曳，解決滑動衝突)
       if (sortableInstance) sortableInstance.destroy();
       sortableInstance = new Sortable(adminListEl, {
         animation: 150,
-        handle: '.draggable-item',
-        delay: 200, // 長按 200ms 觸發拖曳 (適用手機)
-        delayOnTouchOnly: true,
+        handle: '.drag-handle', // 指定按住 ☰ 即可直接順暢拖曳
         onEnd: async function () {
           const newOrderMap = {};
           const items = adminListEl.querySelectorAll('.draggable-item');

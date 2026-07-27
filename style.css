@@ -378,11 +378,16 @@ select {
   font-weight: 600;
 }
 
-/* 長按拖曳圖示 */
 .drag-handle {
   cursor: grab;
-  margin-right: 8px;
+  padding: 8px 10px 8px 0;
   color: #a0aec0;
-  font-size: 16px;
+  font-size: 18px;
   user-select: none;
+  touch-action: none; /* 讓手機瀏覽器不把按住把手的動作當作頁面捲動 */
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: #2e5a27;
 }

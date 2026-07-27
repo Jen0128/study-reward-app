@@ -566,12 +566,15 @@
           `;
         }
 
-        if (log.status === 'Pending' && pts < 0 && currentRole === 'gf') {
+        // 💡 條件新增：如果是 Pending 且 (點數小於 0 或是 抽獎獲得的項目)
+        const isLotteryItem = log.items && log.items.includes('[抽獎獲得]');
+        if (log.status === 'Pending' && (pts < 0 || isLotteryItem) && currentRole === 'gf') {
+          const ptsText = isLotteryItem ? '免費抽獎獲得' : `扣除 ${Math.abs(pts)} 點`;
           redeemHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
               <p style="margin:2px 0;"><b>時間：</b>${log.date}</p>
-              <p style="margin:2px 0;"><b>申請兌換：</b>${log.items} (扣除 ${Math.abs(pts)} 點)</p>
-              <button class="btn btn-success btn-sm" onclick="audit('${log.id}', 'approve')">完成履約 ✅</button>
+              <p style="margin:2px 0;"><b>申請履約：</b>${log.items} (${ptsText})</p>
+              <button class="btn btn-success btn-sm" onclick="audit('${log.id}', 'approve')" style="margin-top:5px;">完成履約 ✅</button>
             </div>
           `;
         }

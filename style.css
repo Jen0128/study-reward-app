@@ -1,22 +1,31 @@
-/* ==========================================
-   全域變數定義：夢幻柔紫色系 (Nynä Palette)
-   ========================================== */
 :root { 
-  --primary: #BCA4F5;       /* 主色：Mauve 柔紫 */
-  --primary-hover: #a385f0; /* 主色懸浮 */
-  --secondary: #81CFFF;     /* 輔色：Sky Blue 天藍 */
-  --dark-accent: #4A69CE;   /* 強調色：Royal Blue 深藍 */
-  --bg-light: #f4f0fd;      /* 頁面背景：淡紫高雅底色 */
-  --card-bg: #ffffff;       /* 卡片背景：純白 */
-  --honeydew: #E5F8F0;      /* 蜜露薄荷綠 */
-  --tea-green: #ECFFBE;      /* 茶綠色 */
-  --text-main: #2C3E50;     /* 主要文字 */
+  /* 附圖色卡色值定義 */
+  --honeydew: #E5F8F0;   /* 蜜露淡綠 */
+  --tea-green: #ECFFBE;  /* 茶綠色 */
+  --mauve: #BCA4F5;      /* 柔紫 */
+  --sky-blue: #81CFFF;   /* 天藍 */
+  --royal-blue: #4A69CE; /* 皇室藍 */
+
+  /* 語意化變數套用 */
+  --primary: var(--mauve);
+  --primary-hover: #a589f2;
+  --secondary: var(--sky-blue);
+  --dark-accent: var(--royal-blue);
+  --bg-light: #f3f6fc;
+  --card-bg: rgba(255, 255, 255, 0.9); /* 微透白，襯托極光背景 */
+  --text-main: #2C3E50;
 }
 
-/* 基本版型與柔和漸層背景 */
+/* 1. 換上類似附圖的模糊極光漸層背景 */
 body { 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-  background: linear-gradient(135deg, #f4f0fd 0%, #e8f0fe 100%); 
+  /* 結合色卡中的綠、紫、藍的多點放射/線性漸層 */
+  background: 
+    radial-gradient(circle at 10% 10%, rgba(236, 255, 190, 0.7) 0%, transparent 40%),
+    radial-gradient(circle at 90% 20%, rgba(188, 164, 245, 0.6) 0%, transparent 45%),
+    radial-gradient(circle at 50% 80%, rgba(129, 207, 255, 0.6) 0%, transparent 50%),
+    linear-gradient(180deg, #E5F8F0 0%, #f0f4ff 100%);
+  background-attachment: fixed;
   margin: 0; 
   padding: 20px 15px 80px; 
   color: var(--text-main); 
@@ -24,12 +33,14 @@ body {
   min-height: 100vh;
 }
 
-/* 卡片容器樣式 */
+/* 2. 卡片加上毛玻璃效果與輕微陰影 */
 .card { 
   background: var(--card-bg); 
-  border-radius: 18px; 
+  backdrop-filter: blur(10px);
+  border-radius: 20px; 
   padding: 18px; 
-  box-shadow: 0 6px 20px rgba(188, 164, 245, 0.15); 
+  box-shadow: 0 8px 24px rgba(74, 105, 206, 0.08); 
+  border: 1px solid rgba(255, 255, 255, 0.8);
   margin-bottom: 18px; 
 }
 
@@ -42,7 +53,7 @@ h2, h3 {
   display: none !important; 
 }
 
-/* 按鈕核心與尺寸設定 */
+/* 3. 按鈕採用 Royal Blue / Mauve 配色 */
 .btn { 
   width: 100%; 
   padding: 12px; 
@@ -55,7 +66,7 @@ h2, h3 {
   cursor: pointer; 
   margin-top: 8px; 
   box-sizing: border-box; 
-  box-shadow: 0 4px 12px rgba(188, 164, 245, 0.3);
+  box-shadow: 0 4px 12px rgba(188, 164, 245, 0.4);
   transition: all 0.2s ease;
 }
 
@@ -76,9 +87,9 @@ h2, h3 {
 .btn-success { background: #2ecc71; box-shadow: none; }
 .btn-secondary { background: #95a5a6; box-shadow: none; }
 
-/* 打卡任務狀態按鈕 */
-.status-btn-todo { background: #BCA4F5; color: white; border: none; cursor: pointer; }
-.status-btn-pending { background: #81CFFF; color: white; border: none; cursor: default; }
+/* 任務狀態按鈕配色彩蛋 */
+.status-btn-todo { background: var(--mauve); color: white; border: none; cursor: pointer; }
+.status-btn-pending { background: var(--sky-blue); color: white; border: none; cursor: default; }
 .status-btn-done { background: #cbd5e0; color: white; border: none; cursor: default; }
 
 /* 任務列表排版 */
@@ -87,7 +98,7 @@ h2, h3 {
   justify-content: space-between; 
   align-items: center; 
   padding: 12px 0; 
-  border-bottom: 1px solid #f0edfa; 
+  border-bottom: 1px solid rgba(188, 164, 245, 0.15); 
 }
 
 .task-info { 
@@ -98,16 +109,16 @@ h2, h3 {
 .task-title { 
   font-weight: bold; 
   font-size: 15px; 
-  color: #34495e;
+  color: #2c3e50;
 }
 
 .task-sub { 
   font-size: 12px; 
-  color: #8c98a4; 
+  color: #718096; 
   margin-top: 2px; 
 }
 
-/* 表單輸入框通用樣式 */
+/* 輸入框 */
 input[type="text"], 
 input[type="password"], 
 input[type="number"],
@@ -116,12 +127,12 @@ select {
   width: 100%; 
   padding: 10px; 
   border-radius: 10px; 
-  border: 1px solid #dcd0f9; 
+  border: 1px solid rgba(188, 164, 245, 0.4); 
   box-sizing: border-box; 
   margin-top: 5px; 
   margin-bottom: 10px; 
   font-size: 15px; 
-  background: #fdfcff;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 /* 狀態 Badge */
@@ -134,14 +145,14 @@ select {
 }
 
 .bg-pending { background: #fff3d6; color: #d97706; }
-.bg-approved { background: #e5f8f0; color: #2e7d32; }
+.bg-approved { background: var(--honeydew); color: #1e7e52; }
 .bg-rejected { background: #fee2e2; color: #dc2626; }
 
-/* 頂部 Header 版面與配色 */
+/* 頂部 Header */
 .top-header-card {
   padding: 14px 18px !important;
-  background: #ffffff;
-  border: 1.5px solid #e8e0fc;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid rgba(188, 164, 245, 0.3);
 }
 
 .header-main-row {
@@ -163,31 +174,31 @@ select {
   height: 38px;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 2px 8px rgba(188, 164, 245, 0.4);
+  box-shadow: 0 2px 8px rgba(74, 105, 206, 0.2);
 }
 
 .header-title-text {
   font-size: 22px;
   font-weight: 800;
-  color: var(--dark-accent); /* Royal Blue */
+  color: var(--dark-accent);
   letter-spacing: 0.5px;
 }
 
-/* 右上角點數標籤 (Pill) */
+/* 右上角點數膠囊 */
 .pts-pill-badge {
   display: inline-flex;
   align-items: center;
   background: #ffffff;
-  border: 2px solid var(--primary);
+  border: 2px solid var(--sky-blue);
   border-radius: 25px;
   padding: 2px 14px 2px 4px;
-  box-shadow: 0 2px 8px rgba(188, 164, 245, 0.2);
+  box-shadow: 0 2px 8px rgba(129, 207, 255, 0.3);
 }
 
 .pts-pill-icon {
   width: 26px;
   height: 26px;
-  background: var(--primary);
+  background: var(--sky-blue);
   color: #ffffff;
   border-radius: 50%;
   display: flex;
@@ -205,10 +216,10 @@ select {
   color: var(--dark-accent);
 }
 
-/* 每日勵志語錄卡片 (柔和紫綠漸層) */
+/* 每日勵志語錄卡片 (茶綠到蜜露漸層) */
 .quote-card {
-  background: linear-gradient(135deg, #f3edf8 0%, #E5F8F0 100%);
-  border-left: 5px solid var(--primary);
+  background: linear-gradient(135deg, var(--tea-green) 0%, var(--honeydew) 100%);
+  border-left: 5px solid var(--sky-blue);
   padding: 14px;
   margin-bottom: 14px;
 }
@@ -223,11 +234,11 @@ select {
 .quote-text {
   font-size: 14px;
   font-weight: 600;
-  color: #4a5568;
+  color: #334155;
   line-height: 1.4;
 }
 
-/* 商店 Grid 雙欄卡片佈局 (柔紫風格) */
+/* 商店 Grid 雙欄卡片佈局 (淡紫底色) */
 .store-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -236,15 +247,15 @@ select {
 }
 
 .product-card {
-  background: #f4effc; /* Mauve 淺紫色背景 */
+  background: rgba(244, 239, 252, 0.85); 
   border-radius: 16px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(188, 164, 245, 0.12);
-  border: 1px solid #e6dcfa;
+  box-shadow: 0 4px 12px rgba(188, 164, 245, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .product-img {
@@ -263,14 +274,14 @@ select {
 .product-store {
   font-size: 11px;
   font-weight: 800;
-  color: #7c52d9;
+  color: var(--dark-accent);
   line-height: 1.2;
 }
 
 .product-name {
   font-weight: 700;
   font-size: 13px;
-  color: var(--dark-accent);
+  color: #1e293b;
   line-height: 1.2;
 }
 
@@ -283,19 +294,19 @@ select {
 
 .product-pts {
   font-size: 13px;
-  color: #5b3fa0;
+  color: #6b21a8;
   font-weight: bold;
 }
 
 .product-exchangeable {
   font-size: 11px;
-  color: #81CFFF;
+  color: #0284c7;
   font-weight: 700;
 }
 
 .product-btn {
   width: 100%;
-  background: var(--primary);
+  background: var(--royal-blue);
   color: white;
   border-radius: 20px;
   padding: 6px 0;
@@ -303,26 +314,26 @@ select {
   border: none;
 }
 
-/* 底部固定導覽列 (柔和純白背景 + 主色高亮) */
+/* 底部固定導覽列 */
 .nav-bar { 
   position: fixed; 
   bottom: 0; 
   left: 0; 
   right: 0; 
-  background: rgba(255, 255, 255, 0.95); 
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.88); 
+  backdrop-filter: blur(12px);
   display: flex; 
   justify-content: space-around; 
   padding: 12px 0; 
-  border-top: 1px solid #e8e0fc; 
-  box-shadow: 0 -4px 15px rgba(188, 164, 245, 0.1);
+  border-top: 1px solid rgba(188, 164, 245, 0.3); 
+  box-shadow: 0 -4px 15px rgba(74, 105, 206, 0.08);
 }
 
 .nav-item { 
   border: none; 
   background: none; 
   font-size: 13px; 
-  color: #a0aec0; 
+  color: #94a3b8; 
   cursor: pointer; 
   font-weight: 600;
 }
@@ -332,12 +343,12 @@ select {
   font-weight: 800; 
 }
 
-/* Modal 位置與外觀 */
+/* Modal */
 .modal-overlay { 
   position: fixed; 
   top:0; left:0; right:0; bottom:0; 
-  background: rgba(44, 62, 80, 0.4); 
-  backdrop-filter: blur(4px);
+  background: rgba(30, 41, 59, 0.4); 
+  backdrop-filter: blur(6px);
   display: flex; 
   align-items: center; 
   justify-content: center; 
@@ -351,7 +362,7 @@ select {
   padding: 20px; 
   width: 100%; 
   max-width: 400px; 
-  box-shadow: 0 10px 30px rgba(188, 164, 245, 0.3); 
+  box-shadow: 0 10px 30px rgba(74, 105, 206, 0.2); 
   position: relative; 
 }
 
@@ -365,17 +376,16 @@ select {
   font-weight: bold; 
 }
 
-/* 拖曳把手 */
 .drag-handle {
   cursor: grab;
   padding: 8px 10px 8px 0;
-  color: #bca4f5;
+  color: var(--mauve);
   font-size: 18px;
   user-select: none;
   touch-action: none;
 }
 
-/* 動態轉盤外框與指針 */
+/* 轉盤 */
 .wheel-wrapper {
   position: relative;
   width: 280px;
@@ -389,12 +399,12 @@ select {
   left: 50%;
   transform: translateX(-50%);
   font-size: 24px;
-  color: #4A69CE;
+  color: var(--royal-blue);
   z-index: 10;
   text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 #wheelCanvas {
   border-radius: 50%;
-  box-shadow: 0 4px 15px rgba(188, 164, 245, 0.3);
+  box-shadow: 0 4px 15px rgba(74, 105, 206, 0.2);
 }

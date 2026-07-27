@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>💖 讀書與健身獎勵系統</title>
+  <title>阿寶充電站</title>
   
   <script src="config.js"></script>
   <link rel="stylesheet" href="style.css">
@@ -22,14 +22,13 @@
   <div id="loginModal" class="modal-overlay hidden">
     <div class="modal-card">
       <span class="modal-close" onclick="closeLoginModal()">✖</span>
-      <h3>🔒 身分切換驗證</h3>
-      <p style="font-size: 14px; margin-bottom: 5px;">請選擇身分並輸入 4 位數 PIN 碼：</p>
+      <h3>🔒 身分驗證</h3>
       <select id="roleSelect">
-        <option value="bf">👦 阿寶 (打卡/兌換/倉庫)</option>
-        <option value="gf">👧 女朋友 (審核/履約/點數/商店管理)</option>
+        <option value="bf">阿寶</option>
+        <option value="gf">小天使</option>
       </select>
-      <input type="password" id="pinInput" placeholder="輸入 PIN 碼" maxlength="4">
-      <button class="btn" onclick="login()">驗證並切換</button>
+      <input type="password" id="pinInput" placeholder="輸入密碼" maxlength="4">
+      <button class="btn" onclick="login()">切換</button>
     </div>
   </div>
 
@@ -54,27 +53,27 @@
     <!-- 男朋友介面 -->
     <div id="bfView" class="hidden">
       <div class="card quote-card">
-        <div class="quote-title">✨ 每日心靈充電站</div>
+        <div class="quote-title">心靈充電站</div>
         <div class="quote-text" id="dailyQuoteText">今天也一起朝目標前進吧！💪</div>
       </div>
 
       <div id="tabBfCheckin">
         <div class="card">
-          <h3>📝 任務打卡 (本週次數限制)</h3>
+          <h3>任務牆</h3>
           <div id="taskList">載入中...</div>
         </div>
       </div>
 
       <div id="tabBfStore" class="hidden">
         <div class="card">
-          <h3>🎁 獎勵商店</h3>
+          <h3>獎勵商店</h3>
           <div id="storeGrid" class="store-grid">載入中...</div>
         </div>
       </div>
 
       <div id="tabBfInventory" class="hidden">
         <div class="card">
-          <h3>📦 我的倉庫 (兌換與抽獎紀錄)</h3>
+          <h3>我的倉庫</h3>
           <div id="inventoryList">載入中...</div>
         </div>
       </div>
@@ -90,31 +89,30 @@
     <div id="gfView" class="hidden">
       <div id="tabGfAudit">
         <div class="card">
-          <h3>🔍 待審核打卡紀錄</h3>
+          <h3>🔍 待審核</h3>
           <div id="auditList">載入中...</div>
         </div>
       </div>
 
       <div id="tabGfRedeem" class="hidden">
         <div class="card">
-          <h3>🛍️ 男友兌換申請 (待履約)</h3>
+          <h3>🛍️ 兌換申請</h3>
           <div id="redeemList">載入中...</div>
         </div>
       </div>
 
       <div id="tabGfManageStore" class="hidden">
         <div class="card">
-          <h3>🎁 商店品項管理</h3>
-          <p style="font-size:12px; color:#718096; margin-bottom:8px;">💡 提示：按住 ☰ 可以拖曳調整顯示順序！</p>
+          <h3>🎁 商店管理</h3>
           <button class="btn btn-success" onclick="openAddProductModal()" style="margin-bottom:15px;">➕ 新增商品品項</button>
           <div id="gfStoreAdminList">載入中...</div>
         </div>
       </div>
 
       <div class="nav-bar">
-        <button id="navGfAudit" class="nav-item active" onclick="switchGfTab('Audit')">🔍 審核打卡</button>
-        <button id="navGfRedeem" class="nav-item" onclick="switchGfTab('Redeem')">🛍️ 兌換履約</button>
-        <button id="navGfManageStore" class="nav-item" onclick="switchGfTab('ManageStore')">🎁 商店管理</button>
+        <button id="navGfAudit" class="nav-item active" onclick="switchGfTab('Audit')">審核打卡</button>
+        <button id="navGfRedeem" class="nav-item" onclick="switchGfTab('Redeem')">兌換履約</button>
+        <button id="navGfManageStore" class="nav-item" onclick="switchGfTab('ManageStore')">商店管理</button>
       </div>
     </div>
   </div>
@@ -124,11 +122,11 @@
     <div class="modal-card">
       <span class="modal-close" onclick="closeModal()">✖</span>
       <h3 id="modalTaskTitle" style="margin-bottom: 15px; padding-right: 20px;">提交任務打卡</h3>
-      <p style="font-size: 14px; margin-bottom: 5px;"><b>📝 任務描述：</b></p>
+      <p style="font-size: 14px; margin-bottom: 5px;"><b>任務描述：</b></p>
       <textarea id="modalTaskDesc" placeholder="例如：微積分 CH3 練習題..." rows="3"></textarea>
-      <p style="font-size: 14px; margin-bottom: 5px; margin-top: 10px;"><b>📸 上傳證明照片：</b></p>
+      <p style="font-size: 14px; margin-bottom: 5px; margin-top: 10px;"><b>上傳證明：</b></p>
       <input type="file" id="modalPhotoInput" accept="image/*">
-      <button class="btn btn-success" style="margin-top: 15px;" onclick="confirmSubmitCheckin()">提交給女友審核</button>
+      <button class="btn btn-success" style="margin-top: 15px;" onclick="confirmSubmitCheckin()">提交審核</button>
     </div>
   </div>
 
@@ -157,7 +155,7 @@
   <!-- 動態幸運輪盤 Modal -->
   <div id="wheelModal" class="modal-overlay hidden">
     <div class="modal-card" style="text-align: center;">
-      <h3 style="margin-bottom: 5px;">🎲 達標 30 點免費抽獎！</h3>
+      <h3 style="margin-bottom: 5px;">幸運大轉盤</h3>
       <p style="font-size: 13px; color: #718096; margin-bottom: 15px;">轉動輪盤獲得獨家獎勵！</p>
       
       <div class="wheel-wrapper">
@@ -180,7 +178,6 @@
     let sortableInstance = null;
     let pendingMilestone = 0;
 
-    // 抽獎獎項配置 (改用 Nynä 配色卡主題色)
     const PRIZES = [
       { name: "指定飲品一杯", weight: 3, color: "#BCA4F5" },
       { name: "神秘小禮物", weight: 0.1, color: "#4A69CE" },
@@ -207,10 +204,62 @@
     const QUOTES = [
       "今天也一起朝目標前進吧！💪",
       "每讀一點，都離夢想更近一點。",
-      "阿寶今天超認真，我有看到哦！✨",
       "不求最快，只求比昨天更進步。",
       "你的努力，未來一定會回報你。",
-      "加油阿寶！我會一直當你的最強應援團！"
+      "今天的你，比昨天更厲害了。",
+      "累了可以休息，但不要放棄。",
+      "一頁一頁讀，成功就在前面。",
+      "相信自己，你真的做得到。",
+      "今天又是閃閃發光的一天！",
+      "每一分鐘的專注都很有價值。",
+      "不要小看今天累積的每一步。",
+      "阿寶衝呀！我一直都支持你。",
+      "讀完這段就離獎勵更近了！",
+      "努力不是白費，它都在慢慢累積。",
+      "現在辛苦一點，以後就輕鬆一點。",
+      "專心一下下，成果會很大。",
+      "你比自己想像中還要厲害。",
+      "今天也請為自己驕傲。",
+      "每一次翻頁，都是新的開始。",
+      "加油！未來的你會感謝現在的自己。",
+      "今天的小努力，就是明天的大進步。",
+      "相信過程，結果會慢慢出現。",
+      "一起把今天過得很充實吧！",
+      "你不是一個人在努力，我一直都在。",
+      "今天也要成為更好的自己。",
+      "先完成，再追求完美。",
+      "阿寶今天一定可以完成任務！",
+      "保持節奏，不用急。",
+      "每完成一項，都是值得開心的事。",
+      "今天的汗水，是未來的底氣。",
+      "不怕慢，只怕停。",
+      "每一個認真的瞬間都很帥。",
+      "今天也請繼續相信自己。",
+      "再撐一下，加油加油!!",
+      "阿寶今天超棒，繼續保持！",
+      "一點一滴，都在累積實力。",
+      "你離成功，比昨天更近了。",
+      "今天的努力，未來都會記得。",
+      "每完成一次，都值得給自己一個讚。👍",
+      "今天也請好好照顧自己。",
+      "不要和別人比較，只要超越昨天的自己。",
+      "每一天都是新的機會。",
+      "讀書很辛苦，但你很勇敢。",
+      "今天完成任務，晚上可以安心休息。",
+      "阿寶今天也在默默變強中。",
+      "相信自己，你一定可以。",
+      "我相信你，比你相信自己還多一點。",
+      "不管今天讀多少，都比沒有開始更棒。",
+      "加油阿寶！我會一直當你的最強應援團！",
+      "今天努力一點，下次飲料我請！",
+      "再撐一下，炸雞正在向你招手。",
+      "不管結果如何，我都會為你感到驕傲。",
+      "今天也很努力了，記得早點休息。",
+      "阿寶加油！你的專屬啦啦隊今天也在線。",
+      "今天的每一分努力，我都偷偷幫你記在心裡。",
+      "完成今天的目標，就離我的獎勵更近一步！",
+      "希望今天的努力，能換來未來更多自由。",
+      "謝謝你為了未來這麼認真，我真的很欣賞你。"
     ];
 
     const TASKS = [
@@ -346,8 +395,7 @@
         <div class="product-card" style="background: #e8f5e9; border: 2px solid #81c784;">
           <div style="font-size: 40px; margin: 10px 0;">🎲</div>
           <div class="product-title-group">
-            <div class="product-store">【即時抽獎】</div>
-            <div class="product-name">幸運轉盤 (1次)</div>
+            <div class="product-name">幸運大轉盤 (1次)</div>
           </div>
           <div class="product-pts-info">
             <span class="product-pts">點數：5</span>

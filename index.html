@@ -17,29 +17,32 @@
 </head>
 <body>
 
-  <!-- 身分驗證 -->
-  <div id="loginView" class="card">
-    <h2>🔒 身分驗證</h2>
-    <p>請選擇您的身分並輸入 4 位數 PIN 碼：</p>
-    <select id="roleSelect">
-      <option value="bf">👦 男朋友 (打卡/兌換/倉庫)</option>
-      <option value="gf">👧 女朋友 (審核/履約/點數/商店管理)</option>
-    </select>
-    <input type="password" id="pinInput" placeholder="輸入 PIN 碼" maxlength="4">
-    <button class="btn" onclick="login()">登入系統</button>
+  <!-- 身分驗證 Modal (需要切換權限時才跳出) -->
+  <div id="loginModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <span class="modal-close" onclick="closeLoginModal()">✖</span>
+      <h3>🔒 身分切換驗證</h3>
+      <p style="font-size: 14px; margin-bottom: 5px;">請選擇身分並輸入 4 位數 PIN 碼：</p>
+      <select id="roleSelect">
+        <option value="bf">👦 阿寶 (打卡/兌換/倉庫)</option>
+        <option value="gf">👧 女朋友 (審核/履約/點數/商店管理)</option>
+      </select>
+      <input type="password" id="pinInput" placeholder="輸入 PIN 碼" maxlength="4">
+      <button class="btn" onclick="login()">驗證並切換</button>
+    </div>
   </div>
 
   <!-- 主應用介面 -->
-  <div id="appView" class="hidden">
+  <div id="appView">
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <span id="roleBadge" class="badge bg-approved">身分已驗證</span>
+          <span id="roleBadge" class="badge bg-approved">阿寶充電站</span>
           <h2 style="margin: 5px 0 0;" id="ptsDisplay">🏆 餘額：<span id="totalPoints">0</span> 點</h2>
         </div>
-        <div style="display:flex; gap: 5px;">
+        <div style="display:flex; gap: 5px; align-items: center;">
           <button id="btnAdjustPts" class="btn btn-secondary btn-sm hidden" onclick="adjustPointsModal()" style="border-radius:8px; background:#f39c12;">± 點數</button>
-          <button class="btn btn-secondary btn-sm" onclick="logout()" style="border-radius:8px;">切換帳號</button>
+          <button class="btn btn-secondary btn-sm" onclick="openLoginModal()" style="border-radius:50%; width:36px; height:36px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px;" title="切換帳號">🔄</button>
         </div>
       </div>
     </div>
@@ -143,22 +146,32 @@
     let userLogs = []; 
     let storeProducts = []; 
 
+    // 新版任務列表
     const TASKS = [
-      { id: 't1', name: '每天完成讀書計劃', pts: 2, limit: 7 },
+      { id: 't1', name: '每日讀書計畫完成', pts: 2, limit: 7 },
       { id: 't2', name: '迷你讀書 (30分鐘)', pts: 1, limit: 7 },
-      { id: 't3', name: '去健身房有氧30分鐘', pts: 2, limit: 7 },
-      { id: 't4', name: '重訓/伸展 20分鐘', pts: 1, limit: 5 },
-      { id: 't5', name: '上班打卡', pts: 1, limit: 7 },
+      { id: 't3', name: '有氧30分鐘', pts: 2, limit: 7 },
+      { id: 't4', name: '重訓 30分鐘', pts: 1, limit: 5 },
+      { id: 't5', name: '上班', pts: 1, limit: 7 },
       { id: 't6', name: '打掃房間', pts: 3, limit: 1 },
       { id: 't7', name: '好好放鬆 1 小時', pts: 1, limit: 3 },
-      { id: 't8', name: '多喝水達標 2000c.c.', pts: 1, limit: 7 },
-      { id: 't9', name: '早睡保養 (12:00前)', pts: 1, limit: 7 },
-      { id: 't10', name: '表達感謝讚美/甜蜜互動', pts: 1, limit: 7 },
-      { id: 't11', name: '分享生活有趣小事', pts: 1, limit: 7 },
-      { id: 't12', name: '規劃下次約會行程', pts: 2, limit: 2 }
+      { id: 't8', name: '喝水 2000c.c.', pts: 1, limit: 7 },
+      { id: 't9', name: '12:00前睡覺', pts: 1, limit: 7 },
+      { id: 't10', name: '規劃下次約會行程', pts: 5, limit: 1 },
+      { id: 't11', name: '分享生活有趣小事', pts: 1, limit: 7 }
     ];
 
-    let currentRole = localStorage.getItem('user_role') || '';
+    // 預設為男友身分 'bf'
+    let currentRole = localStorage.getItem('user_role') || 'bf';
+
+    function openLoginModal() {
+      document.getElementById('pinInput').value = '';
+      document.getElementById('loginModal').classList.remove('hidden');
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.add('hidden');
+    }
 
     function login() {
       const role = document.getElementById('roleSelect').value;
@@ -167,34 +180,39 @@
       if ((role === 'bf' && pin === PIN_BF) || (role === 'gf' && pin === PIN_GF)) {
         currentRole = role;
         localStorage.setItem('user_role', role);
+        closeLoginModal();
         initView();
+        Swal.fire({ icon: 'success', title: '身分切換成功', timer: 1200, showConfirmButton: false });
       } else {
         Swal.fire('錯誤', 'PIN 碼不正確！', 'error');
       }
     }
 
-    function logout() {
-      localStorage.removeItem('user_role');
-      location.reload();
-    }
-
     function initView() {
-      document.getElementById('loginView').classList.add('hidden');
-      document.getElementById('appView').classList.remove('hidden');
-
       if (currentRole === 'gf') {
         document.getElementById('roleBadge').innerText = '👧 女朋友權限';
         document.getElementById('gfView').classList.remove('hidden');
         document.getElementById('bfView').classList.add('hidden');
         document.getElementById('btnAdjustPts').classList.remove('hidden');
       } else {
-        document.getElementById('roleBadge').innerText = '👦 男朋友權限';
+        document.getElementById('roleBadge').innerText = '阿寶充電站';
         document.getElementById('bfView').classList.remove('hidden');
         document.getElementById('gfView').classList.add('hidden');
         document.getElementById('btnAdjustPts').classList.add('hidden');
       }
 
       loadData();
+    }
+
+    function formatImgUrl(url) {
+      if (!url) return 'https://via.placeholder.com/150';
+      if (url.startsWith('data:image')) return url;
+      
+      const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+      }
+      return url;
     }
 
     function renderTasks() {
@@ -223,19 +241,6 @@
         `;
       });
       document.getElementById('taskList').innerHTML = html;
-    }
-
-    function formatImgUrl(url) {
-      if (!url) return 'https://via.placeholder.com/150';
-      // 如果是 Base64 格式直接回傳
-      if (url.startsWith('data:image')) return url;
-      
-      // 如果是 Google Drive 檔案，提取 File ID 轉為通用跨域圖片連結
-      const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (driveMatch && driveMatch[1]) {
-        return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
-      }
-      return url;
     }
 
     function renderStore() {
@@ -420,7 +425,7 @@
         userLogs = data.logs || [];
         storeProducts = data.products || [];
       } catch (e) {
-        console.warn("後端 API 取得失敗，使用當前本地暫存");
+        console.warn("後端 API 取得失敗");
       }
 
       let currentPts = 0;
@@ -432,13 +437,11 @@
       userLogs.slice().reverse().forEach(log => {
         const pts = parseFloat(log.points || 0);
 
-        // 已通過審核的項目
         if (log.status === 'Approved') {
           currentPts += pts;
-          if (pts > 0) totalEarnedPts += pts; // 計算歷史正向累積點數
+          if (pts > 0) totalEarnedPts += pts;
         }
 
-        // 女友端：待審核任務打卡 (pts > 0)
         if (log.status === 'Pending' && pts > 0 && currentRole === 'gf') {
           auditHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
@@ -454,7 +457,6 @@
           `;
         }
 
-        // 女友端：待履約兌換申請 (pts < 0)
         if (log.status === 'Pending' && pts < 0 && currentRole === 'gf') {
           redeemHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
@@ -465,7 +467,6 @@
           `;
         }
 
-        // 男友端：倉庫紀錄（包括待履約與已完成履約）
         if (pts < 0 || (log.items && log.items.includes('抽獎'))) {
           const isApproved = log.status === 'Approved';
           const badgeClass = isApproved ? 'bg-approved' : 'bg-pending';
@@ -494,11 +495,10 @@
       checkWheelMilestone(totalEarnedPts);
     }
 
-    // 檢查 30 點不可重複抽獎邏輯
     function checkWheelMilestone(totalEarned) {
       if (totalEarned < 30 || currentRole !== 'bf') return;
 
-      const currentMilestone = Math.floor(totalEarned / 30) * 30; // 目前達到的最高30倍數 (30, 60, 90...)
+      const currentMilestone = Math.floor(totalEarned / 30) * 30;
       const lastDrawnMilestone = parseInt(localStorage.getItem('last_wheel_milestone') || '0');
 
       if (currentMilestone > lastDrawnMilestone) {
@@ -650,7 +650,8 @@
       navigator.serviceWorker.register('sw.js');
     }
 
-    if (currentRole) initView();
+    // 初始化頁面
+    initView();
   </script>
 </body>
 </html>

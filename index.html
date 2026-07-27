@@ -225,12 +225,25 @@
       document.getElementById('taskList').innerHTML = html;
     }
 
+    function formatImgUrl(url) {
+      if (!url) return 'https://via.placeholder.com/150';
+      // 如果是 Base64 格式直接回傳
+      if (url.startsWith('data:image')) return url;
+      
+      // 如果是 Google Drive 檔案，提取 File ID 轉為通用跨域圖片連結
+      const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+      }
+      return url;
+    }
+
     function renderStore() {
       let html = '';
       storeProducts.forEach(p => {
         html += `
           <div class="product-card">
-            <img src="${p.img || 'https://via.placeholder.com/150'}" class="product-img" alt="${p.name}">
+            <img src="${formatImgUrl(p.img)}" class="product-img" alt="${p.name}" onerror="this.src='https://via.placeholder.com/150'">
             <div class="product-name">${p.name}</div>
             <div class="product-pts">點數：${p.pts}</div>
             <button class="btn btn-success btn-sm product-btn" onclick="redeem('${p.name}', ${p.pts})">兌換</button>
@@ -245,7 +258,7 @@
       storeProducts.forEach(p => {
         html += `
           <div class="task-item">
-            <img src="${p.img || 'https://via.placeholder.com/150'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover; margin-right:10px;">
+            <img src="${formatImgUrl(p.img)}" style="width:45px; height:45px; border-radius:8px; object-fit:cover; margin-right:10px;" onerror="this.src='https://via.placeholder.com/150'">
             <div class="task-info" style="flex:1;">
               <span class="task-title">${p.name}</span>
               <span class="task-sub">需要 ${p.pts} 點</span>

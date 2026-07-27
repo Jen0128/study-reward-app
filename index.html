@@ -339,8 +339,25 @@
 
     function renderStore() {
       const currentPts = parseFloat(document.getElementById('totalPoints').innerText || 0);
-      let html = '';
+      const wheelExchangeable = Math.floor(currentPts / 5);
       
+      // 固定第一格：幸運轉盤
+      let html = `
+        <div class="product-card" style="background: #e8f5e9; border: 2px solid #81c784;">
+          <div style="font-size: 40px; margin: 10px 0;">🎲</div>
+          <div class="product-title-group">
+            <div class="product-store">【即時抽獎】</div>
+            <div class="product-name">幸運轉盤 (1次)</div>
+          </div>
+          <div class="product-pts-info">
+            <span class="product-pts">點數：5</span>
+            <span class="product-exchangeable">(可換 ${wheelExchangeable} 次)</span>
+          </div>
+          <button class="btn btn-success btn-sm product-btn" style="background: #2e7d32;" onclick="redeemWheel()">立刻抽獎</button>
+        </div>
+      `;
+      
+      // 渲染其他上架商品
       storeProducts.forEach(p => {
         const storeDisplay = p.store ? `<div class="product-store">${p.store}</div>` : '';
         const exchangeableCount = p.pts > 0 ? Math.floor(currentPts / p.pts) : 0;
@@ -361,7 +378,50 @@
           </div>
         `;
       });
-      document.getElementById('storeGrid').innerHTML = html || '<p style="color:#718096; grid-column:span 2;">目前尚無上架商品～</p>';
+      document.getElementById('storeGrid').innerHTML = html;
+    }
+
+    // 2. 商店 5 點兌換轉盤 (免女友審核，直接扣點並開轉)
+    let isStorePaidWheel = false; // 標記是否為商店付費抽獎
+
+    async function redeemWheel() {
+      const currentPts = parseFloat(document.getElementById('totalPoints').innerText || 0);
+      if (currentPts < 5) return Swal.fire('點數不足', '幸運轉盤需要 5 點，目前點數不足！', 'warning');
+
+      Swal.fire({
+        title: '🎲 兌換幸運轉盤？',
+        text: '將扣除 5 點並立刻開啟轉盤抽獎！',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '確認兌換 (5點)',
+        cancelButtonText: '取消'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          Swal.fire({ title: '扣點中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+          // 發送直接已完成 (Approved) 的扣點紀錄
+          await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'submit',
+              items: ['[商店兌換] 幸運轉盤 1次'],
+              points: -5,
+              desc: '商店兌換付費轉盤'
+            })
+          });
+
+          isStorePaidWheel = true;
+          pendingMilestone = 0; // 清空達標里程碑標記
+          
+          // 重新載入最新點數並開啟轉盤 Modal
+          await loadData();
+          document.getElementById('wheelModal').classList.remove('hidden');
+          drawWheel();
+          Swal.close();
+        }
+      });
     }
 
     function renderGfStoreAdmin() {
@@ -720,6 +780,7 @@
       return { prize: PRIZES[0], index: 0 };
     }
 
+    // 3. 旋轉與結果處置
     function spinWheel() {
       const spinBtn = document.getElementById('spinBtn');
       spinBtn.disabled = true;
@@ -728,12 +789,7 @@
       const numPrizes = PRIZES.length;
       const arcDegrees = 360 / numPrizes;
 
-      // 指針位在正上方 (270度/12點鐘方向)
-      // 扇區 index 的中心角度為：index * arcDegrees + arcDegrees / 2
-      // 為了讓該扇區轉到 270 度位置，計算需要的旋轉角度：
       const targetDegree = (270 - (index * arcDegrees + arcDegrees / 2) + 360) % 360;
-      
-      // 每次至少轉 5 圈 (1800度) + 補足到目標角度
       const additionalRotation = 1800 + ((targetDegree - (currentRotation % 360) + 360) % 360);
       currentRotation += additionalRotation;
 
@@ -744,7 +800,7 @@
       setTimeout(async () => {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
 
-        // 💡 特殊邏輯：抽中「免費再抽一次」
+        // 免費再抽一次：當場保持 Modal 繼續連抽
         if (prize.name === '免費再抽一次') {
           Swal.fire({
             title: '🎉 幸運爆棚！',
@@ -752,14 +808,17 @@
             icon: 'success',
             confirmButtonText: '繼續抽獎'
           }).then(() => {
-            spinBtn.disabled = false; // 重新啟用按鈕，保持 Modal 開啟讓阿寶再轉
+            spinBtn.disabled = false;
           });
           return;
         }
 
-        // 普通獎項：記錄已抽過的關卡點數並寫入後端
-        localStorage.setItem('last_wheel_milestone', pendingMilestone.toString());
+        // 達標 30 點免費抽獎才寫入里程碑，商店 5 點兌換則不影響里程碑
+        if (!isStorePaidWheel && pendingMilestone > 0) {
+          localStorage.setItem('last_wheel_milestone', pendingMilestone.toString());
+        }
 
+        // 將抽中的獎品寫入後端 (0點，預設 Pending 待女友履約)
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
@@ -768,16 +827,17 @@
             action: 'submit',
             items: [`[抽獎獲得] ${prize.name}`],
             points: 0,
-            desc: `達標 ${pendingMilestone} 點免費抽獎`
+            desc: isStorePaidWheel ? '商店 5 點轉盤獲得' : `達標 ${pendingMilestone} 點免費轉盤獲得`
           })
         });
 
-        // 關閉轉盤視窗並重置狀態
+        // 關閉轉盤並重置
         document.getElementById('wheelModal').classList.add('hidden');
         canvas.style.transition = 'none';
         canvas.style.transform = 'rotate(0deg)';
         currentRotation = 0;
         spinBtn.disabled = false;
+        isStorePaidWheel = false;
 
         Swal.fire('🎉 抽獎結果', `恭喜指針停在：<b>${prize.name}</b>！已放入倉庫～`, 'success');
         loadData();

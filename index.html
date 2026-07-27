@@ -657,7 +657,7 @@
       checkWheelMilestone(currentPts);
     }
 
-    // 輪盤繪製與旋轉邏輯
+    // 繪製轉盤 (確保從 0 度順時針繪製)
     function drawWheel() {
       const canvas = document.getElementById('wheelCanvas');
       if (!canvas) return;
@@ -676,17 +676,20 @@
         ctx.lineTo(140, 140);
         ctx.fill();
 
-        // 繪製文字
+        // 繪製獎項文字
         ctx.save();
         ctx.translate(140, 140);
         ctx.rotate(angle + arcSize / 2);
         ctx.textAlign = "right";
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 11px sans-serif";
-        ctx.fillText(PRIZES[i].name.substring(0, 7), 120, 4);
+        ctx.fillText(PRIZES[i].name.substring(0, 8), 120, 4);
         ctx.restore();
       }
     }
+
+    // 旋轉轉盤與對齊邏輯
+    let currentRotation = 0; // 記錄當前轉盤角度
 
     function checkWheelMilestone(currentPts) {
       // 1. 必須是阿寶權限，且點數大於 0
@@ -725,16 +728,36 @@
       const numPrizes = PRIZES.length;
       const arcDegrees = 360 / numPrizes;
 
-      // 計算目標停止角度
-      const stopDegree = 360 - (index * arcDegrees + arcDegrees / 2) + 90; 
-      const totalRotation = 1800 + stopDegree; // 旋轉 5 圈以上
+      // 指針位在正上方 (270度/12點鐘方向)
+      // 扇區 index 的中心角度為：index * arcDegrees + arcDegrees / 2
+      // 為了讓該扇區轉到 270 度位置，計算需要的旋轉角度：
+      const targetDegree = (270 - (index * arcDegrees + arcDegrees / 2) + 360) % 360;
+      
+      // 每次至少轉 5 圈 (1800度) + 補足到目標角度
+      const additionalRotation = 1800 + ((targetDegree - (currentRotation % 360) + 360) % 360);
+      currentRotation += additionalRotation;
 
       const canvas = document.getElementById('wheelCanvas');
       canvas.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.35, 1)';
-      canvas.style.transform = `rotate(${totalRotation}deg)`;
+      canvas.style.transform = `rotate(${currentRotation}deg)`;
 
       setTimeout(async () => {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+
+        // 💡 特殊邏輯：抽中「免費再抽一次」
+        if (prize.name === '免費再抽一次') {
+          Swal.fire({
+            title: '🎉 幸運爆棚！',
+            text: '抽中【免費再抽一次】！請當場再轉一次！',
+            icon: 'success',
+            confirmButtonText: '繼續抽獎'
+          }).then(() => {
+            spinBtn.disabled = false; // 重新啟用按鈕，保持 Modal 開啟讓阿寶再轉
+          });
+          return;
+        }
+
+        // 普通獎項：記錄已抽過的關卡點數並寫入後端
         localStorage.setItem('last_wheel_milestone', pendingMilestone.toString());
 
         await fetch(API_URL, {
@@ -749,19 +772,21 @@
           })
         });
 
+        // 關閉轉盤視窗並重置狀態
         document.getElementById('wheelModal').classList.add('hidden');
         canvas.style.transition = 'none';
         canvas.style.transform = 'rotate(0deg)';
+        currentRotation = 0;
         spinBtn.disabled = false;
 
-        Swal.fire('🎉 抽獎結果', `恭喜抽中：<b>${prize.name}</b>！已放入倉庫～`, 'success');
+        Swal.fire('🎉 抽獎結果', `恭喜指針停在：<b>${prize.name}</b>！已放入倉庫～`, 'success');
         loadData();
       }, 4200);
     }
 
     async function adjustPointsModal() {
       const { value: formValues } = await Swal.fire({
-        title: '⚙️ 女友手動調整點數',
+        title: '手動儲值',
         html:
           '<input id="swal-pts" type="number" class="swal2-input" placeholder="輸入數值 (如 +5 或 -3)">' +
           '<input id="swal-reason" type="text" class="swal2-input" placeholder="輸入原因">',

@@ -180,28 +180,28 @@
     let sortableInstance = null;
     let pendingMilestone = 0;
 
-    // 抽獎獎項配置 (權重總和 100%)
+    // 抽獎獎項配置 (改用 Nynä 配色卡主題色)
     const PRIZES = [
-      { name: "指定飲品一杯", weight: 3, color: "#f39c12" },
-      { name: "神秘小禮物", weight: 0.1, color: "#e74c3c" },
-      { name: "指定女友陪玩遊戲 1 小時", weight: 2, color: "#9b59b6" },
-      { name: "肩頸放鬆按摩 10 分鐘", weight: 5, color: "#1abc9c" },
-      { name: "免費再抽一次", weight: 4, color: "#2ecc71" },
-      { name: "隔空親親", weight: 3, color: "#fd79a8" },
-      { name: "隔空親親", weight: 3, color: "#e84393" },
-      { name: "隔空親親", weight: 3, color: "#fd79a8" },
-      { name: "隔空抱抱", weight: 3, color: "#fab1a0" },
-      { name: "隔空抱抱", weight: 3, color: "#ff7675" },
-      { name: "隔空抱抱", weight: 3, color: "#fab1a0" }, // 補足選項湊滿權重
-      { name: "阿寶萌萌自拍一張", weight: 4, color: "#ffeaa7" },
-      { name: "阿寶萌萌影片一個", weight: 3, color: "#fdcb6e" },
-      { name: "阿寶生氣自拍一張", weight: 6, color: "#e17055" },
-      { name: "銘謝惠顧", weight: 10, color: "#b2bec3" },
-      { name: "銘謝惠顧", weight: 10, color: "#636e72" },
-      { name: "銘謝惠顧", weight: 10, color: "#b2bec3" }, // 補足選項湊滿權重
-      { name: "銘謝惠顧", weight: 10, color: "#636e72" }, // 補足選項湊滿權重
-      { name: "罰多喝 300c.c. 水", weight: 10, color: "#74b9ff" },
-      { name: "罰仰臥起坐20下", weight: 10, color: "#0984e3" }
+      { name: "指定飲品一杯", weight: 3, color: "#BCA4F5" },
+      { name: "神秘小禮物", weight: 0.1, color: "#4A69CE" },
+      { name: "指定女友陪玩遊戲 1 小時", weight: 2, color: "#81CFFF" },
+      { name: "肩頸放鬆按摩 10 分鐘", weight: 5, color: "#ECFFBE" },
+      { name: "免費再抽一次", weight: 4, color: "#E5F8F0" },
+      { name: "隔空親親", weight: 3, color: "#BCA4F5" },
+      { name: "隔空親親", weight: 3, color: "#81CFFF" },
+      { name: "隔空親親", weight: 3, color: "#BCA4F5" },
+      { name: "隔空抱抱", weight: 3, color: "#4A69CE" },
+      { name: "隔空抱抱", weight: 3, color: "#81CFFF" },
+      { name: "隔空抱抱", weight: 3, color: "#E5F8F0" },
+      { name: "阿寶萌萌自拍一張", weight: 4, color: "#BCA4F5" },
+      { name: "阿寶萌萌影片一個", weight: 3, color: "#81CFFF" },
+      { name: "阿寶生氣自拍一張", weight: 6, color: "#4A69CE" },
+      { name: "銘謝惠顧", weight: 10, color: "#d2c5f9" },
+      { name: "銘謝惠顧", weight: 10, color: "#a8cbf7" },
+      { name: "銘謝惠顧", weight: 10, color: "#d2c5f9" },
+      { name: "銘謝惠顧", weight: 10, color: "#a8cbf7" },
+      { name: "罰多喝 300c.c. 水", weight: 10, color: "#81CFFF" },
+      { name: "罰仰臥起坐20下", weight: 10, color: "#4A69CE" }
     ];
 
     const QUOTES = [

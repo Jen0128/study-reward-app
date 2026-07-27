@@ -186,7 +186,7 @@
     const PRIZES = [
       { name: "指定飲品一杯", weight: 3, color: "#BCA4F5" },
       { name: "神秘小禮物", weight: 0.1, color: "#4A69CE" },
-      { name: "指定女友陪玩遊戲 1 小時", weight: 2, color: "#81CFFF" },
+      { name: "小天使陪玩遊戲 1 小時", weight: 2, color: "#81CFFF" },
       { name: "肩頸放鬆按摩 10 分鐘", weight: 5, color: "#ECFFBE" },
       { name: "免費再抽一次", weight: 4, color: "#E5F8F0" },
       { name: "隔空親親", weight: 3, color: "#BCA4F5" },
@@ -358,7 +358,7 @@
 
     function initView() {
       if (currentRole === 'gf') {
-        document.getElementById('roleBadge').innerText = '👧 女朋友權限';
+        document.getElementById('roleBadge').innerText = '小天使魔法';
         document.getElementById('gfView').classList.remove('hidden');
         document.getElementById('bfView').classList.add('hidden');
         document.getElementById('btnAdjustPts').classList.remove('hidden');
@@ -703,7 +703,7 @@
           })
         });
 
-        Swal.fire('提交成功！', '請等待女友審核發放點數～', 'success');
+        Swal.fire('提交成功！', '請等待小天使審核～', 'success');
         loadData();
       } catch (err) {
         Swal.fire('提交失敗', `錯誤訊息：${err.message || err}`, 'error');
@@ -1011,7 +1011,7 @@
             body: JSON.stringify({ action: 'redeem', rewardName: name, points: pts })
           });
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          Swal.fire('兌換申請已送出！', '請等待女友審核與履約～', 'success');
+          Swal.fire('兌換申請已送出！', '請等待可愛小天使審核～', 'success');
           loadData();
         }
       });

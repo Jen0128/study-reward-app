@@ -390,9 +390,9 @@
       const currentPts = parseFloat(document.getElementById('totalPoints').innerText || 0);
       const wheelExchangeable = Math.floor(currentPts / 5);
       
-      // 固定第一格：幸運轉盤
+      // 固定第一格：幸運轉盤 (改為色卡中的淡紫到茶黃漸層卡片，按鈕改為 Royal Blue 皇室藍)
       let html = `
-        <div class="product-card" style="background: #e8f5e9; border: 2px solid #81c784;">
+        <div class="product-card" style="background: linear-gradient(135deg, rgba(188, 164, 245, 0.25) 0%, rgba(236, 255, 190, 0.4) 100%); border: 1.5px solid var(--mauve);">
           <div style="font-size: 40px; margin: 10px 0;">🎲</div>
           <div class="product-title-group">
             <div class="product-name">幸運大轉盤 (1次)</div>
@@ -401,7 +401,7 @@
             <span class="product-pts">點數：5</span>
             <span class="product-exchangeable">(可換 ${wheelExchangeable} 次)</span>
           </div>
-          <button class="btn btn-success btn-sm product-btn" style="background: #2e7d32;" onclick="redeemWheel()">立刻抽獎</button>
+          <button class="btn btn-sm product-btn" style="background: var(--dark-accent);" onclick="redeemWheel()">立刻抽獎</button>
         </div>
       `;
       

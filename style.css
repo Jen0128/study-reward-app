@@ -216,10 +216,10 @@ select {
   color: var(--dark-accent);
 }
 
-/* 每日勵志語錄卡片 (茶綠到蜜露漸層) */
+/* 每日勵志語錄卡片 (紫色漸層至茶黃色) */
 .quote-card {
-  background: linear-gradient(135deg, var(--tea-green) 0%, var(--honeydew) 100%);
-  border-left: 5px solid var(--sky-blue);
+  background: linear-gradient(135deg, rgba(188, 164, 245, 0.35) 0%, rgba(236, 255, 190, 0.5) 100%);
+  border-left: 5px solid var(--mauve);
   padding: 14px;
   margin-bottom: 14px;
 }
@@ -234,7 +234,7 @@ select {
 .quote-text {
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: #2c3e50;
   line-height: 1.4;
 }
 

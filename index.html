@@ -17,7 +17,7 @@
 </head>
 <body>
 
-  <!-- 身分驗證 View -->
+  <!-- 身分驗證 -->
   <div id="loginView" class="card">
     <h2>🔒 身分驗證</h2>
     <p>請選擇您的身分並輸入 4 位數 PIN 碼：</p>
@@ -29,9 +29,8 @@
     <button class="btn" onclick="login()">登入系統</button>
   </div>
 
-  <!-- 主應用程式 View -->
+  <!-- 主應用介面 -->
   <div id="appView" class="hidden">
-    <!-- 頂部資訊卡片 -->
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -47,7 +46,6 @@
 
     <!-- 男朋友介面 -->
     <div id="bfView" class="hidden">
-      <!-- 打卡頁籤 -->
       <div id="tabBfCheckin">
         <div class="card">
           <h3>📝 任務打卡 (本週次數限制)</h3>
@@ -55,7 +53,6 @@
         </div>
       </div>
 
-      <!-- 商店頁籤 -->
       <div id="tabBfStore" class="hidden">
         <div class="card">
           <h3>🎁 獎勵商店</h3>
@@ -63,7 +60,6 @@
         </div>
       </div>
 
-      <!-- 倉庫頁籤 -->
       <div id="tabBfInventory" class="hidden">
         <div class="card">
           <h3>📦 我的倉庫 (兌換與抽獎紀錄)</h3>
@@ -71,7 +67,6 @@
         </div>
       </div>
 
-      <!-- 男友底部導覽列 -->
       <div class="nav-bar">
         <button id="navBfCheckin" class="nav-item active" onclick="switchBfTab('Checkin')">📝 打卡</button>
         <button id="navBfStore" class="nav-item" onclick="switchBfTab('Store')">🎁 商店</button>
@@ -81,7 +76,6 @@
 
     <!-- 女朋友介面 -->
     <div id="gfView" class="hidden">
-      <!-- 審核打卡 -->
       <div id="tabGfAudit">
         <div class="card">
           <h3>🔍 待審核打卡紀錄</h3>
@@ -89,7 +83,6 @@
         </div>
       </div>
 
-      <!-- 兌換履約 -->
       <div id="tabGfRedeem" class="hidden">
         <div class="card">
           <h3>🛍️ 男友兌換申請 (待履約)</h3>
@@ -97,7 +90,6 @@
         </div>
       </div>
 
-      <!-- 商店管理 -->
       <div id="tabGfManageStore" class="hidden">
         <div class="card">
           <h3>🎁 商店品項管理</h3>
@@ -106,7 +98,6 @@
         </div>
       </div>
 
-      <!-- 女友底部導覽列 -->
       <div class="nav-bar">
         <button id="navGfAudit" class="nav-item active" onclick="switchGfTab('Audit')">🔍 審核打卡</button>
         <button id="navGfRedeem" class="nav-item" onclick="switchGfTab('Redeem')">🛍️ 兌換履約</button>
@@ -115,7 +106,7 @@
     </div>
   </div>
 
-  <!-- 打卡彈出視窗 -->
+  <!-- 打卡 Modal -->
   <div id="checkinModal" class="modal-overlay hidden">
     <div class="modal-card">
       <span class="modal-close" onclick="closeModal()">✖</span>
@@ -128,7 +119,7 @@
     </div>
   </div>
 
-  <!-- 女友新增商品彈出視窗 -->
+  <!-- 新增商品 Modal -->
   <div id="addProductModal" class="modal-overlay hidden">
     <div class="modal-card">
       <span class="modal-close" onclick="closeAddProductModal()">✖</span>
@@ -139,7 +130,7 @@
       <input type="number" id="newProdPts" placeholder="例如：11">
       <p style="font-size: 14px; margin-bottom: 2px;"><b>商品圖片：</b></p>
       <input type="file" id="newProdPhoto" accept="image/*">
-      <button class="btn btn-success" style="margin-top: 15px;" onclick="saveNewProduct()">確認新增</button>
+      <button class="btn btn-success" style="margin-top: 15px;" onclick="saveNewProduct()">確認上架</button>
     </div>
   </div>
 
@@ -150,14 +141,7 @@
 
     let activeTask = null;
     let userLogs = []; 
-    let storeProducts = []; // 從後台或 LocalStorage 載入商品
-
-    const DEFAULT_STORE = [
-      { id: 'p1', name: 'CITY CAFE 冰美式', pts: 9, img: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=300' },
-      { id: 'p2', name: 'CITY CAFE 冰拿鐵', pts: 11, img: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=300' },
-      { id: 'p3', name: '西西里風檸檬氣泡咖啡', pts: 16, img: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=300' },
-      { id: 'p4', name: '肩頸肌肉放鬆 20分鐘', pts: 20, img: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=300' }
-    ];
+    let storeProducts = []; 
 
     const TASKS = [
       { id: 't1', name: '每天完成讀書計劃', pts: 2, limit: 7 },
@@ -210,21 +194,7 @@
         document.getElementById('btnAdjustPts').classList.add('hidden');
       }
 
-      loadProducts();
       loadData();
-    }
-
-    function loadProducts() {
-      const saved = localStorage.getItem('app_products');
-      storeProducts = saved ? JSON.parse(saved) : DEFAULT_STORE;
-      renderStore();
-      renderGfStoreAdmin();
-    }
-
-    function saveProducts() {
-      localStorage.setItem('app_products', JSON.stringify(storeProducts));
-      renderStore();
-      renderGfStoreAdmin();
     }
 
     function renderTasks() {
@@ -260,7 +230,7 @@
       storeProducts.forEach(p => {
         html += `
           <div class="product-card">
-            <img src="${p.img}" class="product-img" alt="${p.name}">
+            <img src="${p.img || 'https://via.placeholder.com/150'}" class="product-img" alt="${p.name}">
             <div class="product-name">${p.name}</div>
             <div class="product-pts">點數：${p.pts}</div>
             <button class="btn btn-success btn-sm product-btn" onclick="redeem('${p.name}', ${p.pts})">兌換</button>
@@ -272,15 +242,15 @@
 
     function renderGfStoreAdmin() {
       let html = '';
-      storeProducts.forEach((p, idx) => {
+      storeProducts.forEach(p => {
         html += `
           <div class="task-item">
-            <img src="${p.img}" style="width:45px; height:45px; border-radius:8px; object-fit:cover; margin-right:10px;">
+            <img src="${p.img || 'https://via.placeholder.com/150'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover; margin-right:10px;">
             <div class="task-info" style="flex:1;">
               <span class="task-title">${p.name}</span>
               <span class="task-sub">需要 ${p.pts} 點</span>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${idx})">刪除</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">刪除</button>
           </div>
         `;
       });
@@ -303,39 +273,48 @@
       const pts = parseFloat(document.getElementById('newProdPts').value);
       const photoFile = document.getElementById('newProdPhoto').files[0];
 
-      if (!name || isNaN(pts) || pts <= 0) return Swal.fire('提示', '請填寫正確的品項名稱與所需點數！', 'warning');
+      if (!name || isNaN(pts) || pts <= 0) return Swal.fire('提示', '請填寫正確品項名稱與點數！', 'warning');
       if (!photoFile) return Swal.fire('提示', '請上傳商品圖片！', 'warning');
 
-      Swal.fire({ title: '處理圖片中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      Swal.fire({ title: '同步新增至雲端...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       try {
         const imgBase64 = await compressImage(photoFile);
-        storeProducts.push({
-          id: 'p_' + Date.now(),
-          name: name,
-          pts: pts,
-          img: imgBase64
+        await fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'addProduct',
+            name: name,
+            pts: pts,
+            imgBase64: imgBase64
+          })
         });
-        saveProducts();
         closeAddProductModal();
-        Swal.fire('成功', '商品已成功上架商店！', 'success');
+        Swal.fire('成功', '商品已同步發布至男友商店！', 'success');
+        loadData();
       } catch (e) {
         Swal.fire('錯誤', '圖片處理失敗，請重試！', 'error');
       }
     }
 
-    function deleteProduct(idx) {
+    async function deleteProduct(id) {
       Swal.fire({
-        title: '確定要刪除此商品？',
-        text: storeProducts[idx].name,
+        title: '確定刪除此商品？',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: '刪除',
-        cancelButtonText: '取消'
-      }).then(res => {
+        confirmButtonText: '刪除'
+      }).then(async (res) => {
         if (res.isConfirmed) {
-          storeProducts.splice(idx, 1);
-          saveProducts();
-          Swal.fire('已刪除', '品項已從商店下架！', 'success');
+          Swal.fire({ title: '刪除中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'deleteProduct', id: id })
+          });
+          Swal.fire('已刪除', '品項已下架！', 'success');
+          loadData();
         }
       });
     }
@@ -392,7 +371,7 @@
       const photoFile = document.getElementById('modalPhotoInput').files[0];
       if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
 
-      if (!activeTask) return Swal.fire('錯誤', '任務資料遺失，請重新點擊打卡！', 'error');
+      if (!activeTask) return Swal.fire('錯誤', '任務資料遺失，請重新點擊！', 'error');
       const currentTask = activeTask;
       closeModal();
 
@@ -401,22 +380,20 @@
       try {
         const photoBase64 = await compressImage(photoFile);
 
-        const payload = JSON.stringify({
-          action: 'submit',
-          items: [currentTask.name],
-          points: currentTask.pts,
-          photoBase64: photoBase64,
-          desc: desc
-        });
-
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: payload
+          body: JSON.stringify({
+            action: 'submit',
+            items: [currentTask.name],
+            points: currentTask.pts,
+            photoBase64: photoBase64,
+            desc: desc
+          })
         });
 
-        Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
+        Swal.fire('提交成功！', '請等待女友審核發放點數～', 'success');
         loadData();
       } catch (err) {
         Swal.fire('提交失敗', `錯誤訊息：${err.message || err}`, 'error');
@@ -426,9 +403,11 @@
     async function loadData() {
       try {
         const res = await fetch(API_URL);
-        userLogs = await res.json();
+        const data = await res.json();
+        userLogs = data.logs || [];
+        storeProducts = data.products || [];
       } catch (e) {
-        console.warn("使用靜態或預設資料測試");
+        console.warn("後端 API 取得失敗，使用當前本地暫存");
       }
 
       let currentPts = 0;
@@ -439,12 +418,14 @@
 
       userLogs.slice().reverse().forEach(log => {
         const pts = parseFloat(log.points || 0);
+
+        // 已通過審核的項目
         if (log.status === 'Approved') {
           currentPts += pts;
-          if (pts > 0) totalEarnedPts += pts; // 統計歷史累積賺取的正點數
+          if (pts > 0) totalEarnedPts += pts; // 計算歷史正向累積點數
         }
 
-        // 女友審核打卡
+        // 女友端：待審核任務打卡 (pts > 0)
         if (log.status === 'Pending' && pts > 0 && currentRole === 'gf') {
           auditHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
@@ -460,26 +441,30 @@
           `;
         }
 
-        // 女友履約兌換
+        // 女友端：待履約兌換申請 (pts < 0)
         if (log.status === 'Pending' && pts < 0 && currentRole === 'gf') {
           redeemHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
               <p style="margin:2px 0;"><b>時間：</b>${log.date}</p>
-              <p style="margin:2px 0;"><b>申請兌換：</b>${log.items}</p>
+              <p style="margin:2px 0;"><b>申請兌換：</b>${log.items} (扣除 ${Math.abs(pts)} 點)</p>
               <button class="btn btn-success btn-sm" onclick="audit('${log.id}', 'approve')">完成履約 ✅</button>
             </div>
           `;
         }
 
-        // 男友倉庫紀錄 (已批准的兌換與抽獎)
-        if (log.status === 'Approved' && (pts < 0 || (log.items && log.items.includes('抽獎')))) {
+        // 男友端：倉庫紀錄（包括待履約與已完成履約）
+        if (pts < 0 || (log.items && log.items.includes('抽獎'))) {
+          const isApproved = log.status === 'Approved';
+          const badgeClass = isApproved ? 'bg-approved' : 'bg-pending';
+          const badgeText = isApproved ? '已完成' : '待履行';
+
           inventoryHtml += `
             <div class="task-item">
               <div class="task-info">
                 <span class="task-title">🎁 ${log.items}</span>
-                <span class="task-sub">紀錄時間：${log.date}</span>
+                <span class="task-sub">申請時間：${log.date}</span>
               </div>
-              <span class="badge bg-approved">已完成</span>
+              <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
           `;
         }
@@ -488,44 +473,45 @@
       document.getElementById('totalPoints').innerText = currentPts;
       document.getElementById('auditList').innerHTML = auditHtml || '<p style="color:#718096;">目前沒有待審核的打卡～</p>';
       document.getElementById('redeemList').innerHTML = redeemHtml || '<p style="color:#718096;">目前沒有待履約的兌換～</p>';
-      document.getElementById('inventoryList').innerHTML = inventoryHtml || '<p style="color:#718096;">倉庫空空如也，快去兌換或抽獎吧！</p>';
+      document.getElementById('inventoryList').innerHTML = inventoryHtml || '<p style="color:#718096;">倉庫空空如也～</p>';
 
       renderTasks();
+      renderStore();
+      renderGfStoreAdmin();
       checkWheelMilestone(totalEarnedPts);
     }
 
-    // 檢查累積點數是否達 30 的倍數觸發免費抽獎
+    // 檢查 30 點不可重複抽獎邏輯
     function checkWheelMilestone(totalEarned) {
       if (totalEarned < 30 || currentRole !== 'bf') return;
 
-      const milestonesReached = Math.floor(totalEarned / 30);
-      const drawnCount = parseInt(localStorage.getItem('free_spins_drawn') || '0');
+      const currentMilestone = Math.floor(totalEarned / 30) * 30; // 目前達到的最高30倍數 (30, 60, 90...)
+      const lastDrawnMilestone = parseInt(localStorage.getItem('last_wheel_milestone') || '0');
 
-      if (milestonesReached > drawnCount) {
+      if (currentMilestone > lastDrawnMilestone) {
         Swal.fire({
           title: '🎉 達標免費抽獎！',
-          text: `恭喜歷史累積獲得達 ${milestonesReached * 30} 點！獲得 1 次免費轉盤抽獎機會！`,
+          text: `恭喜累積達到 ${currentMilestone} 點！獲得 1 次免費抽獎機會！`,
           icon: 'star',
-          confirmButtonText: '立刻免費抽獎'
+          confirmButtonText: '立刻抽獎'
         }).then(() => {
-          triggerFreeSpin(milestonesReached);
+          triggerFreeSpin(currentMilestone);
         });
       }
     }
 
-    function triggerFreeSpin(newDrawnCount) {
-      const prizes = ['CITY CAFE 咖啡券', '神秘小禮物', '再接再厲💪', '肩頸按摩券', '神秘手作曲奇'];
+    function triggerFreeSpin(milestone) {
+      const prizes = ['CITY CAFE 咖啡', '神秘小禮物', '肩頸按摩 20分鐘', '手作曲奇餅乾', '神秘獎勵'];
       const result = prizes[Math.floor(Math.random() * prizes.length)];
 
       Swal.fire({
-        title: '🎲 轉盤抽獎中...',
+        title: '🎲 抽獎中...',
         timer: 2000,
         didOpen: () => Swal.showLoading()
       }).then(async () => {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-        localStorage.setItem('free_spins_drawn', newDrawnCount.toString());
+        localStorage.setItem('last_wheel_milestone', milestone.toString());
 
-        // 自動將抽到的禮物記錄至日誌
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
@@ -534,11 +520,11 @@
             action: 'submit',
             items: [`[抽獎獲得] ${result}`],
             points: 0,
-            desc: '滿 30 點里程碑免費抽獎獎勵'
+            desc: `達標 ${milestone} 點免費抽獎獎勵`
           })
         });
 
-        Swal.fire('🎉 抽獎結果', `恭喜抽中：<b>${result}</b>！已自動放進倉庫～`, 'success');
+        Swal.fire('🎉 抽獎結果', `恭喜抽中：<b>${result}</b>！已放入倉庫～`, 'success');
         loadData();
       });
     }
@@ -547,16 +533,14 @@
       const { value: formValues } = await Swal.fire({
         title: '⚙️ 女友手動調整點數',
         html:
-          '<input id="swal-pts" type="number" class="swal2-input" placeholder="輸入增減數值 (例如 +5 或 -3)">' +
-          '<input id="swal-reason" type="text" class="swal2-input" placeholder="請輸入調整原因">',
+          '<input id="swal-pts" type="number" class="swal2-input" placeholder="輸入數值 (如 +5 或 -3)">' +
+          '<input id="swal-reason" type="text" class="swal2-input" placeholder="輸入原因">',
         focusConfirm: false,
         showCancelButton: true,
-        preConfirm: () => {
-          return [
-            document.getElementById('swal-pts').value,
-            document.getElementById('swal-reason').value
-          ]
-        }
+        preConfirm: () => [
+          document.getElementById('swal-pts').value,
+          document.getElementById('swal-reason').value
+        ]
       });
 
       if (formValues) {
@@ -564,61 +548,60 @@
         const reason = formValues[1];
         if (isNaN(pts) || !reason) return Swal.fire('提示', '請填寫正確點數與原因！', 'warning');
 
-        Swal.fire({ title: '更新點數中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: '調整中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
             action: 'submit',
-            items: [`[女友手動調整] ${reason}`],
+            items: [`[手動調整] ${reason}`],
             points: pts,
-            desc: `手動調整點數：${pts}`
+            desc: `調整點數：${pts}`
           })
         });
 
-        Swal.fire('完成', '點數已更新！', 'success');
+        Swal.fire('完成', '點數已調整！', 'success');
         loadData();
       }
     }
 
-    async function audit(id, action) {
+    async function audit(id, auditAction) {
       let reason = '';
-      if (action === 'reject') {
+      if (auditAction === 'reject') {
         const { value: text } = await Swal.fire({
           title: '退件原因',
           input: 'text',
-          inputPlaceholder: '例如：照片模糊/描述太少',
           showCancelButton: true
         });
         if (!text) return;
         reason = text;
       }
 
-      Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      Swal.fire({ title: '更新狀態中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       await fetch(API_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: action, id: id, reason: reason })
+        body: JSON.stringify({ action: 'audit', id: id, auditAction: auditAction, reason: reason })
       });
-      Swal.fire('完成', '狀態已更新', 'success');
+      Swal.fire('完成', '狀態已更新！', 'success');
       loadData();
     }
 
     async function redeem(name, pts) {
       const currentPts = parseFloat(document.getElementById('totalPoints').innerText);
-      if (currentPts < pts) return Swal.fire('點數不足', `兌換需要 ${pts} 點，目前僅有 ${currentPts} 點`, 'warning');
+      if (currentPts < pts) return Swal.fire('點數不足', `需要 ${pts} 點，目前僅有 ${currentPts} 點`, 'warning');
 
       Swal.fire({
         title: '確認兌換？',
-        text: `將扣除 ${pts} 點兌換【${name}】`,
+        text: `將申請兌換【${name}】(預扣 ${pts} 點)`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: '確認兌換'
       }).then(async (res) => {
         if (res.isConfirmed) {
-          Swal.fire({ title: '兌換中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          Swal.fire({ title: '送出申請中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
           await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -626,7 +609,7 @@
             body: JSON.stringify({ action: 'redeem', rewardName: name, points: pts })
           });
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          Swal.fire('兌換申請已送出！', `已扣除 ${pts} 點，請等待女友履約！`, 'success');
+          Swal.fire('兌換申請已送出！', '請等待女友審核與履約～', 'success');
           loadData();
         }
       });
@@ -638,7 +621,6 @@
         document.getElementById('navBf' + t).classList.remove('active');
       });
       document.getElementById('tabBf' + tab).classList.remove('hidden');
-      document.getElementById('navBf' + tab).classList.active = true;
       document.getElementById('navBf' + tab).classList.add('active');
     }
 

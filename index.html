@@ -289,7 +289,15 @@
       const photoFile = document.getElementById('modalPhotoInput').files[0];
       if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
 
+      // ⚠️ 檢查 activeTask 是否存在
+      if (!activeTask) return Swal.fire('錯誤', '任務資料遺失，請重新點擊打卡！', 'error');
+
+      // 先把需要的任務資料拿出來備份，或等處理完再關閉 modal
+      const currentTask = activeTask;
+
+      // 關閉 Modal (如果放在這裡關，記得用備份的 currentTask)
       closeModal();
+
       Swal.fire({ title: '壓縮與上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       try {
@@ -297,8 +305,8 @@
 
         const payload = JSON.stringify({
           action: 'submit',
-          items: [activeTask.name],
-          points: activeTask.pts,
+          items: [currentTask.name], // 使用 currentTask
+          points: currentTask.pts,  // 使用 currentTask
           photoBase64: photoBase64,
           desc: desc
         });
@@ -313,7 +321,6 @@
         Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
         loadData();
       } catch (err) {
-        // 💡 印出具體錯誤細節，方便除錯
         console.error('提交詳細錯誤資訊：', err);
         Swal.fire('提交失敗', `錯誤訊息：${err.message || err}`, 'error');
       }

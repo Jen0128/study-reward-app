@@ -72,6 +72,11 @@
       <div id="tabBfInventory" class="hidden">
         <div class="card">
           <h3>我的倉庫</h3>
+          <div class="inventory-filter-group" style="display: flex; gap: 4px;">
+            <button id="filterAll" class="btn btn-sm filter-btn active" onclick="setInventoryFilter('all')">全部</button>
+            <button id="filterPending" class="btn btn-sm filter-btn" onclick="setInventoryFilter('Pending')">待履行</button>
+            <button id="filterApproved" class="btn btn-sm filter-btn" onclick="setInventoryFilter('Approved')">已完成</button>
+          </div>
           <div id="inventoryList">載入中...</div>
         </div>
       </div>
@@ -275,6 +280,27 @@
     ];
 
     let currentRole = localStorage.getItem('user_role') || 'bf';
+    let currentInventoryFilter = 'all';
+
+    function setInventoryFilter(status) {
+      currentInventoryFilter = status;
+
+      // 更新按鈕 active 樣式
+      ['all', 'Pending', 'Approved'].forEach(s => {
+        const btnId = s === 'all' ? 'filterAll' : (s === 'Pending' ? 'filterPending' : 'filterApproved');
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          if (s === status) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+      });
+
+      // 重新渲染列表
+      renderInventoryList();
+    }
 
     // 格式化日期時間：例如 2026/07/27 下午07:14
     function formatDate(dateStr) {
@@ -695,7 +721,6 @@
       let currentPts = 0;
       let auditHtml = '';
       let redeemHtml = '';
-      let inventoryHtml = '';
 
       userLogs.slice().reverse().forEach(log => {
         const pts = parseFloat(log.points || 0);
@@ -731,8 +756,35 @@
             </div>
           `;
         }
+      });
 
+      document.getElementById('totalPoints').innerText = currentPts;
+      document.getElementById('auditList').innerHTML = auditHtml || '<p style="color:#718096;">目前沒有待審核的打卡～</p>';
+      document.getElementById('redeemList').innerHTML = redeemHtml || '<p style="color:#718096;">目前沒有待履約的兌換～</p>';
+
+      renderTasks();
+      renderStore();
+      renderGfStoreAdmin();
+      renderInventoryList(); // 渲染倉庫列表
+      checkWheelMilestone(currentPts);
+    }
+
+    // 專門渲染倉庫列表並依照狀態篩選
+    function renderInventoryList() {
+      let inventoryHtml = '';
+
+      userLogs.slice().reverse().forEach(log => {
+        const pts = parseFloat(log.points || 0);
+        const isLotteryItem = log.items && log.items.includes('[抽獎獲得]');
+
+        // 只處理兌換/抽獎項目
         if (pts < 0 || isLotteryItem) {
+          // 判斷狀態篩選
+          if (currentInventoryFilter !== 'all' && log.status !== currentInventoryFilter) {
+            return;
+          }
+
+          const formattedDate = formatDate(log.date);
           const isApproved = log.status === 'Approved';
           const badgeClass = isApproved ? 'bg-approved' : 'bg-pending';
           const badgeText = isApproved ? '已完成' : '待履行';
@@ -749,15 +801,7 @@
         }
       });
 
-      document.getElementById('totalPoints').innerText = currentPts;
-      document.getElementById('auditList').innerHTML = auditHtml || '<p style="color:#718096;">目前沒有待審核的打卡～</p>';
-      document.getElementById('redeemList').innerHTML = redeemHtml || '<p style="color:#718096;">目前沒有待履約的兌換～</p>';
-      document.getElementById('inventoryList').innerHTML = inventoryHtml || '<p style="color:#718096;">倉庫空空如也～</p>';
-
-      renderTasks();
-      renderStore();
-      renderGfStoreAdmin();
-      checkWheelMilestone(currentPts);
+      document.getElementById('inventoryList').innerHTML = inventoryHtml || '<p style="color:#718096;">沒有符合條件的項目～</p>';
     }
 
     // 繪製轉盤 (確保從 0 度順時針繪製)

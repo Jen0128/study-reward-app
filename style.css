@@ -391,3 +391,27 @@ select {
   cursor: grabbing;
   color: #2e5a27;
 }
+
+/* 動態轉盤樣式 */
+.wheel-wrapper {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 10px auto;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  color: #e74c3c;
+  z-index: 10;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#wheelCanvas {
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}

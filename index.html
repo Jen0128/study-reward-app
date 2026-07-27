@@ -14,7 +14,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-  <!-- 引入拖曳排序函式庫 SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
@@ -106,7 +105,7 @@
       <div id="tabGfManageStore" class="hidden">
         <div class="card">
           <h3>🎁 商店品項管理</h3>
-          <p style="font-size:12px; color:#718096; margin-bottom:8px;">💡 提示：長按品項可以拖曳調整顯示順序喔！</p>
+          <p style="font-size:12px; color:#718096; margin-bottom:8px;">💡 提示：按住 ☰ 可以拖曳調整顯示順序！</p>
           <button class="btn btn-success" onclick="openAddProductModal()" style="margin-bottom:15px;">➕ 新增商品品項</button>
           <div id="gfStoreAdminList">載入中...</div>
         </div>
@@ -155,6 +154,21 @@
     </div>
   </div>
 
+  <!-- 動態幸運輪盤 Modal -->
+  <div id="wheelModal" class="modal-overlay hidden">
+    <div class="modal-card" style="text-align: center;">
+      <h3 style="margin-bottom: 5px;">🎲 達標 30 點免費抽獎！</h3>
+      <p style="font-size: 13px; color: #718096; margin-bottom: 15px;">轉動輪盤獲得獨家獎勵！</p>
+      
+      <div class="wheel-wrapper">
+        <div class="wheel-pointer">▼</div>
+        <canvas id="wheelCanvas" width="280" height="280"></canvas>
+      </div>
+
+      <button id="spinBtn" class="btn btn-success" style="margin-top: 15px;" onclick="spinWheel()">開始旋轉！</button>
+    </div>
+  </div>
+
   <script>
     const API_URL = CONFIG.API_URL;
     const PIN_BF = CONFIG.PIN_BF; 
@@ -164,6 +178,31 @@
     let userLogs = []; 
     let storeProducts = []; 
     let sortableInstance = null;
+    let pendingMilestone = 0;
+
+    // 抽獎獎項配置 (權重總和 100%)
+    const PRIZES = [
+      { name: "指定飲品一杯", weight: 3, color: "#f39c12" },
+      { name: "神秘小禮物", weight: 0.1, color: "#e74c3c" },
+      { name: "指定女友陪玩遊戲 1 小時", weight: 2, color: "#9b59b6" },
+      { name: "肩頸放鬆按摩 10 分鐘", weight: 5, color: "#1abc9c" },
+      { name: "免費再抽一次", weight: 4, color: "#2ecc71" },
+      { name: "隔空親親", weight: 3, color: "#fd79a8" },
+      { name: "隔空親親", weight: 3, color: "#e84393" },
+      { name: "隔空親親", weight: 3, color: "#fd79a8" },
+      { name: "隔空抱抱", weight: 3, color: "#fab1a0" },
+      { name: "隔空抱抱", weight: 3, color: "#ff7675" },
+      { name: "隔空抱抱", weight: 3, color: "#fab1a0" }, // 補足選項湊滿權重
+      { name: "阿寶萌萌自拍一張", weight: 4, color: "#ffeaa7" },
+      { name: "阿寶萌萌影片一個", weight: 3, color: "#fdcb6e" },
+      { name: "阿寶生氣自拍一張", weight: 6, color: "#e17055" },
+      { name: "銘謝惠顧", weight: 10, color: "#b2bec3" },
+      { name: "銘謝惠顧", weight: 10, color: "#636e72" },
+      { name: "銘謝惠顧", weight: 10, color: "#b2bec3" }, // 補足選項湊滿權重
+      { name: "銘謝惠顧", weight: 10, color: "#636e72" }, // 補足選項湊滿權重
+      { name: "罰多喝 300c.c. 水", weight: 10, color: "#74b9ff" },
+      { name: "罰仰臥起坐20下", weight: 10, color: "#0984e3" }
+    ];
 
     const QUOTES = [
       "今天也一起朝目標前進吧！💪",
@@ -171,10 +210,6 @@
       "阿寶今天超認真，我有看到哦！✨",
       "不求最快，只求比昨天更進步。",
       "你的努力，未來一定會回報你。",
-      "今天的你，比昨天更厲害了。",
-      "累了可以休息，但不要放棄。",
-      "一頁一頁讀，成功就在前面。",
-      "相信自己，你真的做得到。",
       "加油阿寶！我會一直當你的最強應援團！"
     ];
 
@@ -193,6 +228,27 @@
     ];
 
     let currentRole = localStorage.getItem('user_role') || 'bf';
+
+    // 格式化日期時間：例如 2026/07/27 下午07:14
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? '下午' : '上午';
+      
+      hours = hours % 12;
+      hours = hours ? hours : 12; // 12 小時制
+      const formattedHours = String(hours).padStart(2, '0');
+
+      return `${year}/${month}/${day} ${ampm}${formattedHours}:${minutes}`;
+    }
 
     function initDailyQuote() {
       const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -286,7 +342,6 @@
       let html = '';
       
       storeProducts.forEach(p => {
-        // 只有當 store 有值時才顯示店家抬頭
         const storeDisplay = p.store ? `<div class="product-store">${p.store}</div>` : '';
         const exchangeableCount = p.pts > 0 ? Math.floor(currentPts / p.pts) : 0;
         const fullName = p.store ? `${p.store} ${p.name}` : p.name;
@@ -315,7 +370,7 @@
         const storeText = p.store ? `${p.store} ` : '';
         html += `
           <div class="task-item draggable-item" data-id="${p.id}">
-            <span class="drag-handle" style="touch-action: none;">☰</span>
+            <span class="drag-handle">☰</span>
             <img src="${formatImgUrl(p.img)}" style="width:45px; height:45px; border-radius:8px; object-fit:cover; margin-right:10px;" onerror="this.src='https://via.placeholder.com/150'">
             <div class="task-info" style="flex:1;">
               <span class="task-title">${storeText}${p.name}</span>
@@ -332,11 +387,10 @@
       const adminListEl = document.getElementById('gfStoreAdminList');
       adminListEl.innerHTML = html || '<p style="color:#718096;">尚無商品，請點擊上方按鈕新增！</p>';
 
-      // 初始化 Sortable (改為使用左側 ☰ 把手拖曳，解決滑動衝突)
       if (sortableInstance) sortableInstance.destroy();
       sortableInstance = new Sortable(adminListEl, {
         animation: 150,
-        handle: '.drag-handle', // 指定按住 ☰ 即可直接順暢拖曳
+        handle: '.drag-handle',
         onEnd: async function () {
           const newOrderMap = {};
           const items = adminListEl.querySelectorAll('.draggable-item');
@@ -373,7 +427,7 @@
 
       document.getElementById('productModalTitle').innerText = '編輯獎勵商品';
       document.getElementById('editProductId').value = prod.id;
-      document.getElementById('newProdStore').value = prod.store || '【7-ELEVEN】';
+      document.getElementById('newProdStore').value = prod.store || '';
       document.getElementById('newProdName').value = prod.name;
       document.getElementById('newProdPts').value = prod.pts;
       document.getElementById('newProdPhoto').value = '';
@@ -386,7 +440,7 @@
 
     async function saveProduct() {
       const editId = document.getElementById('editProductId').value;
-      const store = document.getElementById('newProdStore').value || '【7-ELEVEN】';
+      const store = document.getElementById('newProdStore').value || '';
       const name = document.getElementById('newProdName').value;
       const pts = parseFloat(document.getElementById('newProdPts').value);
       const photoFile = document.getElementById('newProdPhoto').files[0];
@@ -401,20 +455,18 @@
         }
 
         const action = editId ? 'editProduct' : 'addProduct';
-        const payload = {
-          action: action,
-          id: editId,
-          store: store,
-          name: name,
-          pts: pts,
-          imgBase64: imgBase64
-        };
-
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            action: action,
+            id: editId,
+            store: store,
+            name: name,
+            pts: pts,
+            imgBase64: imgBase64
+          })
         });
 
         closeAddProductModal();
@@ -538,23 +590,22 @@
       }
 
       let currentPts = 0;
-      let totalEarnedPts = 0;
       let auditHtml = '';
       let redeemHtml = '';
       let inventoryHtml = '';
 
       userLogs.slice().reverse().forEach(log => {
         const pts = parseFloat(log.points || 0);
+        const formattedDate = formatDate(log.date);
 
         if (log.status === 'Approved') {
           currentPts += pts;
-          if (pts > 0) totalEarnedPts += pts;
         }
 
         if (log.status === 'Pending' && pts > 0 && currentRole === 'gf') {
           auditHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
-              <p style="margin:2px 0;"><b>時間：</b>${log.date}</p>
+              <p style="margin:2px 0;"><b>時間：</b>${formattedDate}</p>
               <p style="margin:2px 0;"><b>項目：</b>${log.items} (+${pts}點)</p>
               <p style="margin:2px 0;"><b>說明：</b>${log.desc || '無'}</p>
               ${log.photoUrl ? `<a href="${log.photoUrl}" target="_blank"><img src="${log.photoUrl}" style="max-width:100%; border-radius:8px; margin-top:5px;"></a>` : ''}
@@ -566,20 +617,19 @@
           `;
         }
 
-        // 💡 條件新增：如果是 Pending 且 (點數小於 0 或是 抽獎獲得的項目)
         const isLotteryItem = log.items && log.items.includes('[抽獎獲得]');
         if (log.status === 'Pending' && (pts < 0 || isLotteryItem) && currentRole === 'gf') {
           const ptsText = isLotteryItem ? '免費抽獎獲得' : `扣除 ${Math.abs(pts)} 點`;
           redeemHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
-              <p style="margin:2px 0;"><b>時間：</b>${log.date}</p>
+              <p style="margin:2px 0;"><b>時間：</b>${formattedDate}</p>
               <p style="margin:2px 0;"><b>申請履約：</b>${log.items} (${ptsText})</p>
               <button class="btn btn-success btn-sm" onclick="audit('${log.id}', 'approve')" style="margin-top:5px;">完成履約 ✅</button>
             </div>
           `;
         }
 
-        if (pts < 0 || (log.items && log.items.includes('抽獎'))) {
+        if (pts < 0 || isLotteryItem) {
           const isApproved = log.status === 'Approved';
           const badgeClass = isApproved ? 'bg-approved' : 'bg-pending';
           const badgeText = isApproved ? '已完成' : '待履行';
@@ -588,7 +638,7 @@
             <div class="task-item">
               <div class="task-info">
                 <span class="task-title">🎁 ${log.items}</span>
-                <span class="task-sub">申請時間：${log.date}</span>
+                <span class="task-sub">申請時間：${formattedDate}</span>
               </div>
               <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
@@ -607,40 +657,82 @@
       checkWheelMilestone(currentPts);
     }
 
-    function checkWheelMilestone(currentPts) {
-      if (currentPts < 30 || currentRole !== 'bf') return;
+    // 輪盤繪製與旋轉邏輯
+    function drawWheel() {
+      const canvas = document.getElementById('wheelCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const numPrizes = PRIZES.length;
+      const arcSize = (2 * Math.PI) / numPrizes;
 
-      // 計算當前餘額可達到的最高 30 倍數 (例如 30, 60, 90...)
-      const currentMilestone = Math.floor(currentPts / 30) * 30;
-      const lastDrawnMilestone = parseInt(localStorage.getItem('last_wheel_milestone') || '0');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 如果當前可達到的里程碑大於已抽過的里程碑
-      if (currentMilestone > lastDrawnMilestone) {
-        Swal.fire({
-          title: '🎉 達標免費抽獎！',
-          text: `恭喜點數達到 ${currentPts} 點！獲得 1 次免費抽獎機會！`,
-          icon: 'star',
-          confirmButtonText: '立刻抽獎',
-          allowOutsideClick: false
-        }).then((res) => {
-          if (res.isConfirmed) {
-            triggerFreeSpin(currentMilestone);
-          }
-        });
+      for (let i = 0; i < numPrizes; i++) {
+        const angle = i * arcSize;
+        ctx.beginPath();
+        ctx.fillStyle = PRIZES[i].color;
+        ctx.moveTo(140, 140);
+        ctx.arc(140, 140, 130, angle, angle + arcSize);
+        ctx.lineTo(140, 140);
+        ctx.fill();
+
+        // 繪製文字
+        ctx.save();
+        ctx.translate(140, 140);
+        ctx.rotate(angle + arcSize / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 11px sans-serif";
+        ctx.fillText(PRIZES[i].name.substring(0, 7), 120, 4);
+        ctx.restore();
       }
     }
 
-    function triggerFreeSpin(milestone) {
-      const prizes = ['CITY CAFE 咖啡', '神秘小禮物', '肩頸按摩 20分鐘', '手作曲奇餅乾', '神秘獎勵'];
-      const result = prizes[Math.floor(Math.random() * prizes.length)];
+    function checkWheelMilestone(currentPts) {
+      if (currentPts < 30 || currentRole !== 'bf') return;
 
-      Swal.fire({
-        title: '🎲 抽獎中...',
-        timer: 2000,
-        didOpen: () => Swal.showLoading()
-      }).then(async () => {
+      const currentMilestone = Math.floor(currentPts / 30) * 30;
+      const lastDrawnMilestone = parseInt(localStorage.getItem('last_wheel_milestone') || '0');
+
+      if (currentMilestone > lastDrawnMilestone) {
+        pendingMilestone = currentMilestone;
+        document.getElementById('wheelModal').classList.remove('hidden');
+        drawWheel();
+      }
+    }
+
+    function getRandomPrizeByWeight() {
+      const totalWeight = PRIZES.reduce((sum, p) => sum + p.weight, 0);
+      let rand = Math.random() * totalWeight;
+
+      for (let i = 0; i < PRIZES.length; i++) {
+        if (rand < PRIZES[i].weight) {
+          return { prize: PRIZES[i], index: i };
+        }
+        rand -= PRIZES[i].weight;
+      }
+      return { prize: PRIZES[0], index: 0 };
+    }
+
+    function spinWheel() {
+      const spinBtn = document.getElementById('spinBtn');
+      spinBtn.disabled = true;
+
+      const { prize, index } = getRandomPrizeByWeight();
+      const numPrizes = PRIZES.length;
+      const arcDegrees = 360 / numPrizes;
+
+      // 計算目標停止角度
+      const stopDegree = 360 - (index * arcDegrees + arcDegrees / 2) + 90; 
+      const totalRotation = 1800 + stopDegree; // 旋轉 5 圈以上
+
+      const canvas = document.getElementById('wheelCanvas');
+      canvas.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.35, 1)';
+      canvas.style.transform = `rotate(${totalRotation}deg)`;
+
+      setTimeout(async () => {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-        localStorage.setItem('last_wheel_milestone', milestone.toString());
+        localStorage.setItem('last_wheel_milestone', pendingMilestone.toString());
 
         await fetch(API_URL, {
           method: 'POST',
@@ -648,15 +740,20 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
             action: 'submit',
-            items: [`[抽獎獲得] ${result}`],
+            items: [`[抽獎獲得] ${prize.name}`],
             points: 0,
-            desc: `達標 ${milestone} 點免費抽獎獎勵`
+            desc: `達標 ${pendingMilestone} 點免費抽獎`
           })
         });
 
-        Swal.fire('🎉 抽獎結果', `恭喜抽中：<b>${result}</b>！已放入倉庫～`, 'success');
+        document.getElementById('wheelModal').classList.add('hidden');
+        canvas.style.transition = 'none';
+        canvas.style.transform = 'rotate(0deg)';
+        spinBtn.disabled = false;
+
+        Swal.fire('🎉 抽獎結果', `恭喜抽中：<b>${prize.name}</b>！已放入倉庫～`, 'success');
         loadData();
-      });
+      }, 4200);
     }
 
     async function adjustPointsModal() {

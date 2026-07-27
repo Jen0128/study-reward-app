@@ -4,53 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>💖 讀書與健身獎勵系統</title>
+  
+  <!-- 引入設定檔與外觀樣式檔 -->
+  <script src="config.js"></script>
+  <link rel="stylesheet" href="style.css">
+
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-  <style>
-    :root { --primary: #4a90e2; --bg: #f7f9fc; --card: #ffffff; --text: #2c3e50; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px 15px 80px; color: var(--text); -webkit-tap-highlight-color: transparent; }
-    .card { background: var(--card); border-radius: 16px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 18px; }
-    h2, h3 { margin-top: 0; color: var(--primary); }
-    .hidden { display: none !important; }
-    .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; box-sizing: border-box; }
-    .btn-sm { width: auto; padding: 6px 14px; font-size: 13px; margin-top: 0; border-radius: 20px; font-weight: bold; }
-    .btn-danger { background: #e74c3c; }
-    .btn-success { background: #2ecc71; }
-    .btn-secondary { background: #95a5a6; }
-    
-    /* 狀態按鈕樣式 (對齊參考圖風格) */
-    .status-btn-todo { background: #2e7d32; color: white; border: none; cursor: pointer; } /* 未完成 (綠色) */
-    .status-btn-pending { background: #e67e22; color: white; border: none; cursor: default; } /* 待驗證 (橘色) */
-    .status-btn-done { background: #a0aec0; color: white; border: none; cursor: default; } /* 已完成 (灰色) */
-
-    .task-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #edf2f7; }
-    .task-info { display: flex; flex-direction: column; }
-    .task-title { font-weight: bold; font-size: 15px; }
-    .task-sub { font-size: 12px; color: #718096; margin-top: 2px; }
-    input[type="text"], input[type="password"], textarea, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e0; box-sizing: border-box; margin-top: 5px; margin-bottom: 10px; font-size: 15px; }
-    .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; }
-    .bg-pending { background: #fef3c7; color: #d97706; }
-    .bg-approved { background: #d1fae5; color: #059669; }
-    .bg-rejected { background: #fee2e2; color: #dc2626; }
-    .wheel-container { text-align: center; margin: 15px 0; }
-    .wheel { width: 220px; height: 220px; border-radius: 50%; border: 8px solid var(--primary); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-weight: bold; background: conic-gradient(#3498db 0 36deg, #e74c3c 36deg 72deg, #f1c40f 72deg 108deg, #2ecc71 108deg 144deg, #9b59b6 144deg 180deg, #e67e22 180deg 216deg, #1abc9c 216deg 252deg, #34495e 252deg 288deg, #7f8c8d 288deg 324deg, #d35400 324deg 360deg); transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #e2e8f0; }
-    .nav-item { border: none; background: none; font-size: 12px; color: #718096; cursor: pointer; }
-    .nav-item.active { color: var(--primary); font-weight: bold; }
-    
-    /* 彈出視窗 Modal 樣式 */
-    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal-card { background: white; border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
-    .modal-close { position: absolute; top: 15px; right: 15px; font-size: 20px; cursor: pointer; color: #718096; font-weight: bold; }
-  </style>
 </head>
 <body>
 
-  <!-- 1. 登入介面 -->
   <div id="loginView" class="card">
     <h2>🔒 身分驗證</h2>
     <p>請選擇您的身分並輸入 4 位數 PIN 碼：</p>
@@ -58,14 +25,11 @@
       <option value="bf">👦 男朋友 (打卡/兌換/抽獎)</option>
       <option value="gf">👧 女朋友 (審核/履約管理)</option>
     </select>
-    <input type="password" id="pinInput" placeholder="輸入 PIN 碼 (預設: 1111/8888)" maxlength="4">
+    <input type="password" id="pinInput" placeholder="輸入 PIN 碼" maxlength="4">
     <button class="btn" onclick="login()">登入系統</button>
   </div>
 
-  <!-- 2. 主程式區域 -->
   <div id="appView" class="hidden">
-    
-    <!-- 頂部資訊欄 -->
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -77,9 +41,8 @@
       <p id="drawCountText" style="margin: 5px 0 0; font-size: 13px; color: #718096;">可抽獎次數：<b id="drawCount">0</b> 次 (10點/次)</p>
     </div>
 
-    <!-- ==================== 男朋友介面 ==================== -->
+    <!-- 男朋友介面 -->
     <div id="bfView" class="hidden">
-      <!-- 男友打卡頁 -->
       <div id="tabBfCheckin">
         <div class="card">
           <h3>📝 任務打卡 (本週次數限制)</h3>
@@ -87,7 +50,6 @@
         </div>
       </div>
 
-      <!-- 男友商店頁 -->
       <div id="tabBfStore" class="hidden">
         <div class="card">
           <h3>🎁 獎勵商店</h3>
@@ -95,7 +57,6 @@
         </div>
       </div>
 
-      <!-- 男友輪盤頁 -->
       <div id="tabBfWheel" class="hidden">
         <div class="card" style="text-align: center;">
           <h3>🎲 幸運抽獎輪盤</h3>
@@ -107,7 +68,6 @@
         </div>
       </div>
 
-      <!-- 男友底部導覽列 -->
       <div class="nav-bar">
         <button id="navBfCheckin" class="nav-item active" onclick="switchBfTab('Checkin')">📝 打卡</button>
         <button id="navBfStore" class="nav-item" onclick="switchBfTab('Store')">🎁 商店</button>
@@ -115,9 +75,8 @@
       </div>
     </div>
 
-    <!-- ==================== 女朋友介面 ==================== -->
+    <!-- 女朋友介面 -->
     <div id="gfView" class="hidden">
-      <!-- 女友打卡審核頁 -->
       <div id="tabGfAudit">
         <div class="card">
           <h3>🔍 待審核打卡紀錄</h3>
@@ -125,7 +84,6 @@
         </div>
       </div>
 
-      <!-- 女友兌換履約頁 -->
       <div id="tabGfRedeem" class="hidden">
         <div class="card">
           <h3>🛍️ 男友兌換申請 (待履約)</h3>
@@ -133,22 +91,19 @@
         </div>
       </div>
 
-      <!-- 女友底部導覽列 -->
       <div class="nav-bar">
         <button id="navGfAudit" class="nav-item active" onclick="switchGfTab('Audit')">🔍 審核打卡</button>
         <button id="navGfRedeem" class="nav-item" onclick="switchGfTab('Redeem')">🛍️ 兌換履約</button>
       </div>
     </div>
-
   </div>
 
-  <!-- 3. 打卡彈出視窗 (Modal) -->
   <div id="checkinModal" class="modal-overlay hidden">
     <div class="modal-card">
       <span class="modal-close" onclick="closeModal()">✖</span>
       <h3 id="modalTaskTitle" style="margin-bottom: 15px; padding-right: 20px;">提交任務打卡</h3>
       
-      <p style="font-size: 14px; margin-bottom: 5px;"><b>📝 任務描述 (如：讀書章節、健身內容、打掃區域)：</b></p>
+      <p style="font-size: 14px; margin-bottom: 5px;"><b>📝 任務描述：</b></p>
       <textarea id="modalTaskDesc" placeholder="例如：微積分 CH3 練習題、有氧跑步機 30 分鐘..." rows="3"></textarea>
 
       <p style="font-size: 14px; margin-bottom: 5px; margin-top: 10px;"><b>📸 上傳證明照片：</b></p>
@@ -159,12 +114,13 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyZ8ls-B00xg4CiSlTJo9-dRCg3kn21xEtSeKk1isLSQD3lko9PtTabPLrQhIfuuTguow/exec";
-    const PIN_BF = "1111"; // 男友 PIN 碼
-    const PIN_GF = "8888"; // 女友 PIN 碼
+    // 讀取 config.js 設定檔
+    const API_URL = CONFIG.API_URL;
+    const PIN_BF = CONFIG.PIN_BF; 
+    const PIN_GF = CONFIG.PIN_GF; 
 
     let activeTask = null;
-    let userLogs = []; // 保存傳回的打卡紀錄歷史
+    let userLogs = []; 
 
     const TASKS = [
       { id: 't1', name: '每天完成讀書計劃', pts: 2, limit: 7 },
@@ -240,19 +196,15 @@
     function renderTasks() {
       let html = '';
       TASKS.forEach(t => {
-        // 判斷該任務在歷史紀錄中的狀態
         const pendingItem = userLogs.find(l => l.items.includes(t.name) && l.status === 'Pending');
         const approvedCount = userLogs.filter(l => l.items.includes(t.name) && l.status === 'Approved').length;
 
         let btnHtml = '';
         if (pendingItem) {
-          // 有打卡正待驗證中
           btnHtml = `<button class="btn btn-sm status-btn-pending">待驗證</button>`;
         } else if (approvedCount >= t.limit) {
-          // 已達到本週次數上限
           btnHtml = `<button class="btn btn-sm status-btn-done">已完成</button>`;
         } else {
-          // 尚未完成，顯示可點擊的「未完成」按鈕
           btnHtml = `<button class="btn btn-sm status-btn-todo" onclick="openCheckinModal('${t.name}', ${t.pts})">未完成</button>`;
         }
 
@@ -298,49 +250,72 @@
       activeTask = null;
     }
 
-    function getBase64(file) {
+    function compressImage(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxWidth = 1024;
+
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            resolve(compressedBase64);
+          };
+          img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
       });
     }
 
     async function confirmSubmitCheckin() {
-        const desc = document.getElementById('modalTaskDesc').value;
-        if (!desc) return Swal.fire('提示', '請填寫任務描述說明！', 'warning');
+      const desc = document.getElementById('modalTaskDesc').value;
+      if (!desc) return Swal.fire('提示', '請填寫任務描述說明！', 'warning');
 
-        const photoFile = document.getElementById('modalPhotoInput').files[0];
-        if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
+      const photoFile = document.getElementById('modalPhotoInput').files[0];
+      if (!photoFile) return Swal.fire('提示', '請上傳證明照片！', 'warning');
 
-        closeModal();
-        Swal.fire({ title: '上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      closeModal();
+      Swal.fire({ title: '壓縮與上傳中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-        try {
-            const photoBase64 = await getBase64(photoFile);
+      try {
+        const photoBase64 = await compressImage(photoFile);
 
-            // 改用 URLSearchParams 傳送成標準 Form 表單，能完美避開 GAS CORS 問題並成功傳送 Base64 照片
-            const payload = new URLSearchParams();
-            payload.append('data', JSON.stringify({
-            action: 'submit',
-            items: [activeTask.name],
-            points: activeTask.pts,
-            photoBase64: photoBase64,
-            desc: desc
-            }));
+        const payload = JSON.stringify({
+          action: 'submit',
+          items: [activeTask.name],
+          points: activeTask.pts,
+          photoBase64: photoBase64,
+          desc: desc
+        });
 
-            await fetch(API_URL, {
-            method: 'POST',
-            body: payload
-            });
+        await fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: payload
+        });
 
-            Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
-            loadData();
-        } catch (err) {
-            Swal.fire('提交失敗', '上傳過程發生錯誤，請重試！', 'error');
-        }
-        }
+        Swal.fire('提交成功！', '已成功上傳，請等待女友審核發放點數～', 'success');
+        loadData();
+      } catch (err) {
+        Swal.fire('提交失敗', '照片處理或上傳發生錯誤，請重試！', 'error');
+      }
+    }
 
     async function loadData() {
       const res = await fetch(API_URL);
@@ -355,7 +330,6 @@
           approvedPts += parseFloat(log.points);
         }
 
-        // 女友審核打卡清單
         if (log.status === 'Pending' && log.points > 0 && currentRole === 'gf') {
           auditHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
@@ -371,7 +345,6 @@
           `;
         }
 
-        // 女友兌換履約清單
         if (log.status === 'Pending' && log.points < 0 && currentRole === 'gf') {
           redeemHtml += `
             <div style="border-bottom: 1px solid #edf2f7; padding: 10px 0;">
@@ -388,7 +361,6 @@
       document.getElementById('auditList').innerHTML = auditHtml || '<p style="color:#718096;">目前沒有待審核的打卡～</p>';
       document.getElementById('redeemList').innerHTML = redeemHtml || '<p style="color:#718096;">目前沒有待履約的兌換～</p>';
 
-      // 重新繪製打卡列表狀態（未完成 / 待驗證 / 已完成）
       renderTasks();
     }
 
@@ -409,7 +381,7 @@
       await fetch(API_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: action, id: id, reason: reason })
       });
       Swal.fire('完成', '狀態已更新', 'success');
@@ -426,7 +398,7 @@
       await fetch(API_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'redeem', rewardName: name, points: pts })
       });
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });

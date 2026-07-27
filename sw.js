@@ -1,15 +1,55 @@
+const CACHE_NAME = 'reward-app-v3'; // 每次更新程式碼時，可以順便改這個版本號 (例如 v3 -> v4)
+
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './style.css',
+  './config.js',
+  './icon.jpg'
+];
+
+// 1. 安裝階段：強制跳過等待，立刻啟用新的 Service Worker
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
-    caches.open('reward-app-v2').then((cache) => {
-      return cache.addAll(['./', './index.html', './manifest.json']);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
     })
   );
 });
 
+// 2. 啟用階段：清除舊版本的快取（如舊的 v1, v2），並讓新 SW 立刻接管所有頁面
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// 3. 請求階段：採用「網路優先 (Network First)」策略
+// 優先抓取最新檔案，如果沒網路（離線）才讀取快取
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    })
+    fetch(e.request)
+      .then((networkResponse) => {
+        // 如果成功抓到最新資源，順便更新快取
+        if (networkResponse && networkResponse.status === 200 && e.request.method === 'GET') {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        // 沒網路時才回傳快取內容
+        return caches.match(e.request);
+      })
   );
 });

@@ -390,36 +390,33 @@
 
       Swal.fire({
         title: '🎲 兌換幸運轉盤？',
-        text: '將扣除 5 點並立刻開啟轉盤抽獎！',
+        text: '點擊確認將立刻扣除 5 點並開啟轉盤！',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: '確認兌換 (5點)',
+        confirmButtonText: '確認兌換 (-5點)',
         cancelButtonText: '取消'
       }).then(async (res) => {
         if (res.isConfirmed) {
-          Swal.fire({ title: '扣點中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          Swal.fire({ title: '即時扣點中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-          // 發送直接已完成 (Approved) 的扣點紀錄
+          // 發送 storeSpin，直接寫入 Approved 狀態，實扣 5 點
           await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'submit',
-              items: ['[商店兌換] 幸運轉盤 1次'],
-              points: -5,
-              desc: '商店兌換付費轉盤'
-            })
+            body: JSON.stringify({ action: 'storeSpin' })
           });
 
           isStorePaidWheel = true;
-          pendingMilestone = 0; // 清空達標里程碑標記
+          pendingMilestone = 0; 
           
-          // 重新載入最新點數並開啟轉盤 Modal
+          // 重新載入最新餘額 (餘額會立刻少 5 點)
           await loadData();
+          
+          // 關閉 Loading 彈窗並開啟轉盤
+          Swal.close();
           document.getElementById('wheelModal').classList.remove('hidden');
           drawWheel();
-          Swal.close();
         }
       });
     }
@@ -813,12 +810,11 @@
           return;
         }
 
-        // 達標 30 點免費抽獎才寫入里程碑，商店 5 點兌換則不影響里程碑
         if (!isStorePaidWheel && pendingMilestone > 0) {
           localStorage.setItem('last_wheel_milestone', pendingMilestone.toString());
         }
 
-        // 將抽中的獎品寫入後端 (0點，預設 Pending 待女友履約)
+        // 💡 獎品寫入 0 點，紀錄為 Pending (女友端完成履約時只變更狀態，絕對不二次扣點)
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
@@ -826,12 +822,11 @@
           body: JSON.stringify({
             action: 'submit',
             items: [`[抽獎獲得] ${prize.name}`],
-            points: 0,
+            points: 0, 
             desc: isStorePaidWheel ? '商店 5 點轉盤獲得' : `達標 ${pendingMilestone} 點免費轉盤獲得`
           })
         });
 
-        // 關閉轉盤並重置
         document.getElementById('wheelModal').classList.add('hidden');
         canvas.style.transition = 'none';
         canvas.style.transform = 'rotate(0deg)';

@@ -14,10 +14,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <!-- 引入拖曳排序函式庫 SortableJS -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
 
-  <!-- 身分驗證 Modal (點擊標題時跳出) -->
+  <!-- 身分驗證 Modal -->
   <div id="loginModal" class="modal-overlay hidden">
     <div class="modal-card">
       <span class="modal-close" onclick="closeLoginModal()">✖</span>
@@ -34,29 +36,24 @@
 
   <!-- 主應用介面 -->
   <div id="appView">
-    <!-- 頂部卡片 (仿照設計圖佈局) -->
     <div class="card top-header-card">
       <div class="header-main-row">
-        <!-- 左側：系統 Icon + 大標題 (點擊切換權限) -->
         <div class="header-title-group" onclick="openLoginModal()" title="點擊切換身分權限">
           <img src="icon.jpg" class="app-header-icon" alt="System Icon" onerror="this.src='icon.png'">
           <span id="roleBadge" class="header-title-text">阿寶充電站</span>
         </div>
 
-        <!-- 右側：仿設計圖橢圓點數標籤 -->
         <div class="pts-pill-badge" id="ptsDisplay">
           <span class="pts-pill-icon">D</span>
           <span class="pts-pill-num" id="totalPoints">0</span>
         </div>
       </div>
 
-      <!-- 女手動調整點數按鈕 (僅女友權限顯示) -->
       <button id="btnAdjustPts" class="btn btn-secondary btn-sm hidden" onclick="adjustPointsModal()" style="margin-top:10px; background:#f39c12; width:100%;">⚙️ 女手動調整點數</button>
     </div>
 
     <!-- 男朋友介面 -->
     <div id="bfView" class="hidden">
-      <!-- 每日鼓勵語錄區塊 -->
       <div class="card quote-card">
         <div class="quote-title">✨ 每日心靈充電站</div>
         <div class="quote-text" id="dailyQuoteText">今天也一起朝目標前進吧！💪</div>
@@ -109,6 +106,7 @@
       <div id="tabGfManageStore" class="hidden">
         <div class="card">
           <h3>🎁 商店品項管理</h3>
+          <p style="font-size:12px; color:#718096; margin-bottom:8px;">💡 提示：長按品項可以拖曳調整顯示順序喔！</p>
           <button class="btn btn-success" onclick="openAddProductModal()" style="margin-bottom:15px;">➕ 新增商品品項</button>
           <div id="gfStoreAdminList">載入中...</div>
         </div>
@@ -135,18 +133,25 @@
     </div>
   </div>
 
-  <!-- 新增商品 Modal -->
+  <!-- 新增/編輯商品 Modal -->
   <div id="addProductModal" class="modal-overlay hidden">
     <div class="modal-card">
       <span class="modal-close" onclick="closeAddProductModal()">✖</span>
-      <h3 style="margin-bottom: 15px;">新增獎勵商品</h3>
+      <h3 id="productModalTitle" style="margin-bottom: 15px;">新增獎勵商品</h3>
+      <input type="hidden" id="editProductId">
+      
+      <p style="font-size: 14px; margin-bottom: 2px;"><b>店家/品牌名稱：</b></p>
+      <input type="text" id="newProdStore" placeholder="例如：【7-ELEVEN】">
+      
       <p style="font-size: 14px; margin-bottom: 2px;"><b>品項名稱：</b></p>
-      <input type="text" id="newProdName" placeholder="例如：CITY CAFE 冰拿鐵">
+      <input type="text" id="newProdName" placeholder="例如：冰美式咖啡(大)">
+      
       <p style="font-size: 14px; margin-bottom: 2px;"><b>所需點數：</b></p>
-      <input type="number" id="newProdPts" placeholder="例如：11">
+      <input type="number" id="newProdPts" placeholder="例如：9">
+      
       <p style="font-size: 14px; margin-bottom: 2px;"><b>商品圖片：</b></p>
       <input type="file" id="newProdPhoto" accept="image/*">
-      <button class="btn btn-success" style="margin-top: 15px;" onclick="saveNewProduct()">確認上架</button>
+      <button class="btn btn-success" style="margin-top: 15px;" onclick="saveProduct()">確認儲存</button>
     </div>
   </div>
 
@@ -158,8 +163,8 @@
     let activeTask = null;
     let userLogs = []; 
     let storeProducts = []; 
+    let sortableInstance = null;
 
-    // 隨機語錄資料庫
     const QUOTES = [
       "今天也一起朝目標前進吧！💪",
       "每讀一點，都離夢想更近一點。",
@@ -170,56 +175,7 @@
       "累了可以休息，但不要放棄。",
       "一頁一頁讀，成功就在前面。",
       "相信自己，你真的做得到。",
-      "今天又是閃閃發光的一天！",
-      "每一分鐘的專注都很有價值。",
-      "不要小看今天累積的每一步。",
-      "阿寶衝呀！我一直都支持你。",
-      "讀完這段就離獎勵更近了！",
-      "努力不是白費，它都在慢慢累積。",
-      "現在辛苦一點，以後就輕鬆一點。",
-      "專心一下下，成果會很大。",
-      "你比自己想像中還要厲害。",
-      "今天也請為自己驕傲。",
-      "每一次翻頁，都是新的開始。",
-      "加油！未來的你會感謝現在的自己。",
-      "今天的小努力，就是明天的大進步。",
-      "相信過程，結果會慢慢出現。",
-      "一起把今天過得很充實吧！",
-      "你不是一個人在努力，我一直都在。",
-      "今天也要成為更好的自己。",
-      "先完成，再追求完美。",
-      "阿寶今天一定可以完成任務！",
-      "保持節奏，不用急。",
-      "每完成一項，都是值得開心的事。",
-      "今天的汗水，是未來的底氣。",
-      "不怕慢，只怕停。",
-      "每一個認真的瞬間都很帥。",
-      "今天也請繼續相信自己。",
-      "再撐一下，加油加油!!",
-      "阿寶今天超棒，繼續保持！",
-      "一點一滴，都在累積實力。",
-      "你離成功，比昨天更近了。",
-      "今天的努力，未來都會記得。",
-      "每完成一次，都值得給自己一個讚。👍",
-      "今天也請好好照顧自己。",
-      "不要和別人比較，只要超越昨天的自己。",
-      "每一天都是新的機會。",
-      "讀書很辛苦，但你很勇敢。",
-      "今天完成任務，晚上可以安心休息。",
-      "阿寶今天也在默默變強中。",
-      "相信自己，你一定可以。",
-      "我相信你，比你相信自己還多一點。",
-      "不管今天讀多少，都比沒有開始更棒。",
-      "加油阿寶！我會一直當你的最強應援團！",
-      "今天努力一點，下次飲料我請！",
-      "再撐一下，炸雞正在向你招手。",
-      "不管結果如何，我都會為你感到驕傲。",
-      "今天也很努力了，記得早點休息。",
-      "阿寶加油！你的專屬啦啦隊今天也在線。",
-      "今天的每一分努力，我都偷偷幫你記在心裡。",
-      "完成今天的目標，就離我的獎勵更近一步！",
-      "希望今天的努力，能換來未來更多自由。",
-      "謝謝你為了未來這麼認真，我真的很欣賞你。"
+      "加油阿寶！我會一直當你的最強應援團！"
     ];
 
     const TASKS = [
@@ -238,7 +194,6 @@
 
     let currentRole = localStorage.getItem('user_role') || 'bf';
 
-    // 每日固定隨機語錄演算法
     function initDailyQuote() {
       const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       const seed = parseInt(todayStr);
@@ -327,14 +282,25 @@
     }
 
     function renderStore() {
+      const currentPts = parseFloat(document.getElementById('totalPoints').innerText || 0);
       let html = '';
+      
       storeProducts.forEach(p => {
+        const storeName = p.store || '【7-ELEVEN】';
+        const exchangeableCount = p.pts > 0 ? Math.floor(currentPts / p.pts) : 0;
+
         html += `
           <div class="product-card">
             <img src="${formatImgUrl(p.img)}" class="product-img" alt="${p.name}" onerror="this.src='https://via.placeholder.com/150'">
-            <div class="product-name">${p.name}</div>
-            <div class="product-pts">點數：${p.pts}</div>
-            <button class="btn btn-success btn-sm product-btn" onclick="redeem('${p.name}', ${p.pts})">兌換</button>
+            <div class="product-title-group">
+              <div class="product-store">${storeName}</div>
+              <div class="product-name">${p.name}</div>
+            </div>
+            <div class="product-pts-info">
+              <span class="product-pts">點數：${p.pts}</span>
+              <span class="product-exchangeable">(可換 ${exchangeableCount} 個)</span>
+            </div>
+            <button class="btn btn-success btn-sm product-btn" onclick="redeem('${storeName} ${p.name}', ${p.pts})">兌換</button>
           </div>
         `;
       });
@@ -344,23 +310,72 @@
     function renderGfStoreAdmin() {
       let html = '';
       storeProducts.forEach(p => {
+        const storeName = p.store || '【7-ELEVEN】';
         html += `
-          <div class="task-item">
+          <div class="task-item draggable-item" data-id="${p.id}">
+            <span class="drag-handle">☰</span>
             <img src="${formatImgUrl(p.img)}" style="width:45px; height:45px; border-radius:8px; object-fit:cover; margin-right:10px;" onerror="this.src='https://via.placeholder.com/150'">
             <div class="task-info" style="flex:1;">
-              <span class="task-title">${p.name}</span>
+              <span class="task-title">${storeName} ${p.name}</span>
               <span class="task-sub">需要 ${p.pts} 點</span>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">刪除</button>
+            <div style="display:flex; gap:5px;">
+              <button class="btn btn-secondary btn-sm" onclick="openEditProductModal('${p.id}')">編輯</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">刪除</button>
+            </div>
           </div>
         `;
       });
-      document.getElementById('gfStoreAdminList').innerHTML = html || '<p style="color:#718096;">尚無商品，請點擊上方按鈕新增！</p>';
+      
+      const adminListEl = document.getElementById('gfStoreAdminList');
+      adminListEl.innerHTML = html || '<p style="color:#718096;">尚無商品，請點擊上方按鈕新增！</p>';
+
+      // 初始化長按拖曳排序 Sortable
+      if (sortableInstance) sortableInstance.destroy();
+      sortableInstance = new Sortable(adminListEl, {
+        animation: 150,
+        handle: '.draggable-item',
+        delay: 200, // 長按 200ms 觸發拖曳 (適用手機)
+        delayOnTouchOnly: true,
+        onEnd: async function () {
+          const newOrderMap = {};
+          const items = adminListEl.querySelectorAll('.draggable-item');
+          items.forEach((el, index) => {
+            newOrderMap[el.getAttribute('data-id')] = index + 1;
+          });
+
+          Swal.fire({ title: '儲存排序中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'updateOrder', orderMap: newOrderMap })
+          });
+          Swal.fire('成功', '商品順序已更新！', 'success');
+          loadData();
+        }
+      });
     }
 
     function openAddProductModal() {
+      document.getElementById('productModalTitle').innerText = '新增獎勵商品';
+      document.getElementById('editProductId').value = '';
+      document.getElementById('newProdStore').value = '【7-ELEVEN】';
       document.getElementById('newProdName').value = '';
       document.getElementById('newProdPts').value = '';
+      document.getElementById('newProdPhoto').value = '';
+      document.getElementById('addProductModal').classList.remove('hidden');
+    }
+
+    function openEditProductModal(id) {
+      const prod = storeProducts.find(p => p.id === id);
+      if (!prod) return;
+
+      document.getElementById('productModalTitle').innerText = '編輯獎勵商品';
+      document.getElementById('editProductId').value = prod.id;
+      document.getElementById('newProdStore').value = prod.store || '【7-ELEVEN】';
+      document.getElementById('newProdName').value = prod.name;
+      document.getElementById('newProdPts').value = prod.pts;
       document.getElementById('newProdPhoto').value = '';
       document.getElementById('addProductModal').classList.remove('hidden');
     }
@@ -369,33 +384,44 @@
       document.getElementById('addProductModal').classList.add('hidden');
     }
 
-    async function saveNewProduct() {
+    async function saveProduct() {
+      const editId = document.getElementById('editProductId').value;
+      const store = document.getElementById('newProdStore').value || '【7-ELEVEN】';
       const name = document.getElementById('newProdName').value;
       const pts = parseFloat(document.getElementById('newProdPts').value);
       const photoFile = document.getElementById('newProdPhoto').files[0];
 
       if (!name || isNaN(pts) || pts <= 0) return Swal.fire('提示', '請填寫正確品項名稱與點數！', 'warning');
-      if (!photoFile) return Swal.fire('提示', '請上傳商品圖片！', 'warning');
 
-      Swal.fire({ title: '同步新增至雲端...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      Swal.fire({ title: '同步雲端中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       try {
-        const imgBase64 = await compressImage(photoFile);
+        let imgBase64 = null;
+        if (photoFile) {
+          imgBase64 = await compressImage(photoFile);
+        }
+
+        const action = editId ? 'editProduct' : 'addProduct';
+        const payload = {
+          action: action,
+          id: editId,
+          store: store,
+          name: name,
+          pts: pts,
+          imgBase64: imgBase64
+        };
+
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'addProduct',
-            name: name,
-            pts: pts,
-            imgBase64: imgBase64
-          })
+          body: JSON.stringify(payload)
         });
+
         closeAddProductModal();
-        Swal.fire('成功', '商品已同步發布至男友商店！', 'success');
+        Swal.fire('成功', '商品資料已更新！', 'success');
         loadData();
       } catch (e) {
-        Swal.fire('錯誤', '圖片處理失敗，請重試！', 'error');
+        Swal.fire('錯誤', '處理失敗，請重試！', 'error');
       }
     }
 
@@ -589,7 +615,7 @@
           title: '🎉 達標免費抽獎！',
           text: `恭喜累積達到 ${currentMilestone} 點！獲得 1 次免費抽獎機會！`,
           icon: 'star',
-          confirmButtonText: '刻抽獎'
+          confirmButtonText: '立刻抽獎'
         }).then(() => {
           triggerFreeSpin(currentMilestone);
         });
